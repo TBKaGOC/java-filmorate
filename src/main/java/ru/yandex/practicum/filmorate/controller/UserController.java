@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -25,16 +26,16 @@ public class UserController {
     @PostMapping
     public User createUser(@Valid @RequestBody User user) throws DuplicatedDataException {
         for (User user1: users.values()) {
-            if (user.getEmail().equals(user1.getEmail())) {
+            if (StringUtils.equals(user.getEmail(), user1.getEmail())) {
                 log.warn("Этот email уже используется");
                 throw new DuplicatedDataException("Этот email уже используется");
-            } else if (user.getLogin().equals(user1.getLogin())) {
+            } else if (StringUtils.equals(user.getLogin(), user1.getLogin())) {
                 log.warn("Этот логин уже используется");
                 throw new DuplicatedDataException("Этот логин уже используется");
             }
         }
 
-        if (user.getName() == null || user.getName().isBlank()) {
+        if (!StringUtils.isNotBlank(user.getName())) {
             user.setName(user.getLogin());
         }
         user.setId(getNextId());
@@ -51,7 +52,7 @@ public class UserController {
             User oldUser = users.get(user.getId());
             if (user.getEmail() != null) {
                 for (User user1: users.values()) {
-                    if (user.getEmail().equals(user1.getEmail()) && !user.getId().equals(user1.getId())) {
+                    if (StringUtils.equals(user.getEmail(), user1.getEmail())) {
                         log.warn("Этот email уже используется");
                         throw new DuplicatedDataException("Этот email уже используется");
                     }
@@ -69,13 +70,13 @@ public class UserController {
                 } else {
                     oldUser.setName(user.getLogin());
                 }
-            } else if (oldUser.getLogin().equals(oldUser.getName())) {
+            } else if (StringUtils.equals(oldUser.getLogin(), oldUser.getName())) {
                 oldUser.setName(user.getLogin());
             }
 
             if (user.getLogin() != null) {
                 for (User user1: users.values()) {
-                    if (user.getLogin().equals(user1.getLogin()) && !user.getId().equals(user1.getId())) {
+                    if (StringUtils.equals(user.getLogin(), user1.getLogin())) {
                         log.warn("Этот логин уже используется");
                         throw new DuplicatedDataException("Этот логин уже используется");
                     }
