@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.storage;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +11,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class UserControllerTests {
-    private UserController userController;
+public class UserStorageTests {
+    private UserStorage userStorage;
 
     @BeforeEach
     public void createNewUserController() {
-        userController = new UserController();
+        userStorage = new InMemoryUserStorage();
     }
 
     @Test
@@ -31,15 +31,15 @@ public class UserControllerTests {
                     .birthday(LocalDate.of(2000, 1, 1))
                     .build();
 
-            userController.createUser(newUser);
+            userStorage.addUser(newUser);
             userCollection.add(newUser);
         }
 
-        Assertions.assertTrue(userController.getUsers().containsAll(userCollection));
+        Assertions.assertTrue(userStorage.getUsers().containsAll(userCollection));
     }
 
     @Test
-    public void shouldWeCreateNewUser() throws DuplicatedDataException {
+    public void shouldWeCreateNewUser() throws DuplicatedDataException, NotFoundException {
         User newUser = User.builder()
                 .login("login")
                 .name("name")
@@ -47,14 +47,17 @@ public class UserControllerTests {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        User createdUser = userController.createUser(newUser);
+
+
+        userStorage.addUser(newUser);
+        User createdUser = userStorage.getUser(1);
         newUser.setId(createdUser.getId());
 
         Assertions.assertEquals(createdUser, newUser);
     }
 
     @Test
-    public void shouldWeCreateNewUserWithBlankName() throws DuplicatedDataException {
+    public void shouldWeCreateNewUserWithBlankName() throws DuplicatedDataException, NotFoundException {
         User newUser = User.builder()
                 .login("login")
                 .name("")
@@ -62,20 +65,22 @@ public class UserControllerTests {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        User createdUser = userController.createUser(newUser);
+        userStorage.addUser(newUser);
 
+        User createdUser = userStorage.getUser(1);
         Assertions.assertEquals(createdUser.getName(), createdUser.getLogin());
     }
 
     @Test
-    public void shouldWeCreateNewUserWithNullName() throws DuplicatedDataException {
+    public void shouldWeCreateNewUserWithNullName() throws DuplicatedDataException, NotFoundException {
         User newUser = User.builder()
                 .login("login")
                 .email("rightemail@email.right")
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        User createdUser = userController.createUser(newUser);
+        userStorage.addUser(newUser);
+        User createdUser = userStorage.getUser(1);
 
         Assertions.assertEquals(createdUser.getName(), createdUser.getLogin());
     }
@@ -88,14 +93,14 @@ public class UserControllerTests {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        userController.createUser(newUser);
+        userStorage.addUser(newUser);
         User newUser2 = User.builder()
                 .login("newLogin")
                 .email("rightemail@email.right")
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        Assertions.assertThrowsExactly(DuplicatedDataException.class, () -> userController.createUser(newUser2));
+        Assertions.assertThrowsExactly(DuplicatedDataException.class, () -> userStorage.addUser(newUser2));
     }
 
     @Test
@@ -106,14 +111,14 @@ public class UserControllerTests {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        userController.createUser(newUser);
+        userStorage.addUser(newUser);
         User newUser2 = User.builder()
                 .login("login")
                 .email("newrightemail@email.right")
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        Assertions.assertThrowsExactly(DuplicatedDataException.class, () -> userController.createUser(newUser2));
+        Assertions.assertThrowsExactly(DuplicatedDataException.class, () -> userStorage.addUser(newUser2));
     }
 
     @Test
@@ -125,7 +130,7 @@ public class UserControllerTests {
                 .name("name")
                 .build();
 
-        userController.createUser(newUser);
+        userStorage.addUser(newUser);
         User newUser2 = User.builder()
                 .id(newUser.getId())
                 .login("login2")
@@ -133,7 +138,8 @@ public class UserControllerTests {
                 .birthday(LocalDate.of(2003, 4, 23))
                 .name("name2")
                 .build();
-        User updateUser = userController.updateUser(newUser2);
+        userStorage.updateUser(newUser2);
+        User updateUser = userStorage.getUser(newUser2.getId());
 
         Assertions.assertEquals(newUser2, updateUser);
     }
@@ -153,8 +159,8 @@ public class UserControllerTests {
                 .name("name")
                 .build();
 
-        userController.createUser(newUser);
-        userController.createUser(newUser2);
+        userStorage.addUser(newUser);
+        userStorage.addUser(newUser2);
 
         User userForUpdate = User.builder()
                 .id(newUser.getId())
@@ -164,7 +170,7 @@ public class UserControllerTests {
                 .name("name2")
                 .build();
 
-        Assertions.assertThrows(DuplicatedDataException.class, () -> userController.updateUser(userForUpdate));
+        Assertions.assertThrows(DuplicatedDataException.class, () -> userStorage.updateUser(userForUpdate));
     }
 
     @Test
@@ -182,8 +188,8 @@ public class UserControllerTests {
                 .name("name")
                 .build();
 
-        userController.createUser(newUser);
-        userController.createUser(newUser2);
+        userStorage.addUser(newUser);
+        userStorage.addUser(newUser2);
 
         User userForUpdate = User.builder()
                 .id(newUser.getId())
@@ -193,7 +199,7 @@ public class UserControllerTests {
                 .name("name2")
                 .build();
 
-        Assertions.assertThrows(DuplicatedDataException.class, () -> userController.updateUser(userForUpdate));
+        Assertions.assertThrows(DuplicatedDataException.class, () -> userStorage.updateUser(userForUpdate));
     }
 
     @Test
@@ -205,14 +211,15 @@ public class UserControllerTests {
                 .name("")
                 .build();
 
-        userController.createUser(newUser);
+        userStorage.addUser(newUser);
         User newUser2 = User.builder()
                 .id(newUser.getId())
                 .login("login2")
                 .email("newrightemail2@email.right")
                 .birthday(LocalDate.of(2003, 4, 23))
                 .build();
-        User updateUser = userController.updateUser(newUser2);
+        userStorage.updateUser(newUser2);
+        User updateUser = userStorage.getUser(newUser2.getId());
 
         Assertions.assertEquals(updateUser.getName(), newUser2.getLogin());
     }
@@ -226,7 +233,7 @@ public class UserControllerTests {
                 .name("name")
                 .build();
 
-        userController.createUser(newUser);
+        userStorage.addUser(newUser);
 
         User userForUpdate = User.builder()
                 .id(newUser.getId() + 1)
@@ -236,6 +243,6 @@ public class UserControllerTests {
                 .name("name2")
                 .build();
 
-        Assertions.assertThrows(NotFoundException.class, () -> userController.updateUser(userForUpdate));
+        Assertions.assertThrows(NotFoundException.class, () -> userStorage.updateUser(userForUpdate));
     }
 }

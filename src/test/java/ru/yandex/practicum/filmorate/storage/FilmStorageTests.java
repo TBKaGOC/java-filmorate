@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.storage;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,17 +11,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class FilmControllerTests {
-    private FilmController filmController;
+public class FilmStorageTests {
+    private FilmStorage filmStorage;
 
     @BeforeEach
     public void createNewFilmController() {
-        filmController = new FilmController();
+        filmStorage = new InMemoryFilmStorage();
     }
 
     @Test
     public void shouldWeGetAllFilms() throws CorruptedDataException {
-        Collection<Film> userCollection = new ArrayList<>();
+        Collection<Film> filmCollection = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
             Film newFilm = Film.builder()
@@ -31,26 +31,25 @@ public class FilmControllerTests {
                     .duration(120)
                     .build();
 
-            filmController.createFilm(newFilm);
-            userCollection.add(newFilm);
+            filmStorage.addFilm(newFilm);
+            filmCollection.add(newFilm);
         }
 
-        Assertions.assertTrue(filmController.getFilms().containsAll(userCollection));
+        Assertions.assertTrue(filmStorage.getFilms().containsAll(filmCollection));
     }
 
     @Test
-    public void shouldWeCreateNewFilm() throws CorruptedDataException {
+    public void shouldWeCreateNewFilm() throws CorruptedDataException, NotFoundException {
         Film newFilm = Film.builder()
                 .name("name")
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(120)
                 .build();
+        filmStorage.addFilm(newFilm);
+        newFilm.setId(1);
 
-        Film createdFilm = filmController.createFilm(newFilm);
-        newFilm.setId(createdFilm.getId());
-
-        Assertions.assertEquals(newFilm, createdFilm);
+        Assertions.assertEquals(newFilm, filmStorage.getFilm(1));
     }
 
     @Test
@@ -62,7 +61,7 @@ public class FilmControllerTests {
                 .duration(120)
                 .build();
 
-        Assertions.assertThrowsExactly(CorruptedDataException.class, () -> filmController.createFilm(newFilm));
+        Assertions.assertThrowsExactly(CorruptedDataException.class, () -> filmStorage.addFilm(newFilm));
     }
 
     @Test
@@ -74,7 +73,7 @@ public class FilmControllerTests {
                 .duration(120)
                 .build();
 
-        filmController.createFilm(newFilm);
+        filmStorage.addFilm(newFilm);
         Film newFilm2 = Film.builder()
                 .id(newFilm.getId())
                 .name("name")
@@ -82,7 +81,8 @@ public class FilmControllerTests {
                 .releaseDate(LocalDate.of(2001, 1, 1))
                 .duration(120)
                 .build();
-        Film updateFilm = filmController.updateFilm(newFilm2);
+        filmStorage.updateFilm(newFilm2);
+        Film updateFilm = filmStorage.getFilm(newFilm2.getId());
 
         Assertions.assertEquals(newFilm2, updateFilm);
     }
@@ -95,7 +95,7 @@ public class FilmControllerTests {
                 .releaseDate(LocalDate.of(2001, 1, 1))
                 .duration(120)
                 .build();
-        filmController.createFilm(newFilm);
+        filmStorage.addFilm(newFilm);
 
         Film newFilm2 = Film.builder()
                 .id(newFilm.getId())
@@ -105,7 +105,7 @@ public class FilmControllerTests {
                 .duration(120)
                 .build();
 
-        Assertions.assertThrows(CorruptedDataException.class, () -> filmController.updateFilm(newFilm2));
+        Assertions.assertThrows(CorruptedDataException.class, () -> filmStorage.updateFilm(newFilm2));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class FilmControllerTests {
                 .duration(120)
                 .build();
 
-        filmController.createFilm(newFilm);
+        filmStorage.addFilm(newFilm);
         Film newFilm2 = Film.builder()
                 .id(newFilm.getId() + 1)
                 .name("name")
@@ -126,6 +126,6 @@ public class FilmControllerTests {
                 .duration(120)
                 .build();
 
-        Assertions.assertThrows(NotFoundException.class, () -> filmController.updateFilm(newFilm2));
+        Assertions.assertThrows(NotFoundException.class, () -> filmStorage.updateFilm(newFilm2));
     }
 }
