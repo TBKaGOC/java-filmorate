@@ -7,9 +7,8 @@ import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -24,7 +23,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User getUser(Integer id) throws NotFoundException {
         if (!users.containsKey(id)) {
-            log.warn("При попытке найти пользователя " + id + " возникает NotFoundException");
+            log.warn("Не удалось получить пользователя {}", id);
             throw new NotFoundException("Пользователь " + id + " не найден");
         }
 
@@ -32,15 +31,44 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
+    public Collection<User> getFriends(Integer id) throws NotFoundException {
+        if (!users.containsKey(id)) {
+            log.warn("Не удалось получить друзей пользователя {}", id);
+            throw new NotFoundException("Пользователь " + id + " не найден");
+        }
+
+        Collection<User> result = new HashSet<>();
+        for (Integer friend: users.get(id).getFriends()) {
+            result.add(getUser(friend));
+        }
+        return result;
+    }
+
+    @Override
+    public Set<User> getMutualFriend(Integer id1, Integer id2) throws NotFoundException {
+        User user1 = getUser(id1);
+        User user2 = getUser(id2);
+
+        Set<Integer> friends = user1.getFriends().stream()
+                .filter(e -> user2.getFriends().contains(e))
+                .collect(Collectors.toSet());
+
+        Set<User> result = new HashSet<>();
+        for (Integer id: friends) {
+            result.add(getUser(id));
+        }
+
+        return result;
+    }
+
+    @Override
     public void addUser(User user) throws DuplicatedDataException {
         for (User user1: users.values()) {
             if (StringUtils.equals(user.getEmail(), user1.getEmail())) {
-                log.warn("При попытке обновить email пользователя " + user.getId() +
-                        " возникает DuplicatedDataException");
+                log.warn("Не удалось добавить нового пользователя");
                 throw new DuplicatedDataException("Email " + user.getEmail() + " уже используется");
             } else if (StringUtils.equals(user.getLogin(), user1.getLogin())) {
-                log.warn("При попытке обновить email пользователя " + user.getId() +
-                        " возникает DuplicatedDataException");
+                log.warn("Не удалось добавить нового пользователя");
                 throw new DuplicatedDataException("Логин " + user.getLogin() + " уже используется");
             }
         }
@@ -51,55 +79,6 @@ public class InMemoryUserStorage implements UserStorage {
         user.setId(getNextId());
 
         users.put(user.getId(), user);
-
-        log.info("Новый пользователь успешно добавлен");
-    }
-
-    @Override
-    public void updateUser(User user) throws DuplicatedDataException, NotFoundException {
-        if (users.containsKey(user.getId())) {
-            User oldUser = users.get(user.getId());
-            if (user.getEmail() != null) {
-                for (User user1: users.values()) {
-                    if (StringUtils.equals(user.getEmail(), user1.getEmail())) {
-                        log.warn("При попытке обновить email пользователя " + user.getId() +
-                                " возникает DuplicatedDataException");
-                        throw new DuplicatedDataException("Этот email уже используется");
-                    }
-                }
-                oldUser.setEmail(user.getEmail());
-            }
-
-            if (user.getBirthday() != null) {
-                oldUser.setBirthday(user.getBirthday());
-            }
-
-            if (user.getName() != null) {
-                if (!user.getName().isBlank()) {
-                    oldUser.setName(user.getName());
-                } else {
-                    oldUser.setName(user.getLogin());
-                }
-            } else if (StringUtils.equals(oldUser.getLogin(), oldUser.getName())) {
-                oldUser.setName(user.getLogin());
-            }
-
-            if (user.getLogin() != null) {
-                for (User user1: users.values()) {
-                    if (StringUtils.equals(user.getLogin(), user1.getLogin())) {
-                        log.warn("При попытке обновить логин пользователя " + user.getId() +
-                                " возникает DuplicatedDataException");
-                        throw new DuplicatedDataException("Логин " + user.getLogin() + " уже используется");
-                    }
-                }
-                oldUser.setLogin(user.getLogin());
-            }
-
-            log.info("Пользователь " + user.getId() + " успешно обновлён");
-        } else {
-            log.warn("При попытке обновить пользователя " + user.getId() + " возникает NotFoundException");
-            throw new NotFoundException("Пользователь " + user.getId() + " не найден");
-        }
     }
 
     @Override
@@ -107,11 +86,9 @@ public class InMemoryUserStorage implements UserStorage {
         users.remove(id);
     }
 
-    public void findUser(Integer id) throws NotFoundException {
-        if (!users.containsKey(id)) {
-            log.warn("Пользователь " + id + " не найден");
-            throw new NotFoundException("Пользователь " + id + " не найден");
-        }
+    @Override
+    public boolean contains(Integer id) {
+        return users.containsKey(id);
     }
 
     private int getNextId() {

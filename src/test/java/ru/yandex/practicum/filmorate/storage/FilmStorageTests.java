@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class FilmStorageTests {
     private FilmStorage filmStorage;
@@ -65,67 +66,75 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeUpdateFilm() throws CorruptedDataException, NotFoundException {
-        Film newFilm = Film.builder()
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .build();
+    public void shouldWeGetMostPopularFilms() throws NotFoundException, CorruptedDataException {
+        for (int i = 0; i < 5; i++) {
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .likesNumber(i)
+                    .build();
+            filmStorage.addFilm(film);
+        }
 
-        filmStorage.addFilm(newFilm);
-        Film newFilm2 = Film.builder()
-                .id(newFilm.getId())
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .build();
-        filmStorage.updateFilm(newFilm2);
-        Film updateFilm = filmStorage.getFilm(newFilm2.getId());
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
 
-        Assertions.assertEquals(newFilm2, updateFilm);
+        Assertions.assertEquals(filmStorage.getMostPopular("5"), films);
     }
 
     @Test
-    public void shouldWeGetExceptionWhenUpdateLocalDateIsBeforeEarlyDate() throws CorruptedDataException {
-        Film newFilm = Film.builder()
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .build();
-        filmStorage.addFilm(newFilm);
+    public void shouldWeGetMostPopularFilmsWithATopSizeLargerThanTheList() throws NotFoundException,
+            CorruptedDataException {
+        for (int i = 0; i < 5; i++) {
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .likesNumber(i)
+                    .build();
+            filmStorage.addFilm(film);
+        }
 
-        Film newFilm2 = Film.builder()
-                .id(newFilm.getId())
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(1, 1, 1))
-                .duration(120)
-                .build();
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
 
-        Assertions.assertThrows(CorruptedDataException.class, () -> filmStorage.updateFilm(newFilm2));
+        Assertions.assertEquals(filmStorage.getMostPopular("10"), films);
     }
 
     @Test
-    public void shouldWeGetExceptionWhenUpdateUserWithNewId() throws CorruptedDataException {
-        Film newFilm = Film.builder()
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .build();
+    public void shouldWeGetMostPopularFilmsWithATopSizeSmallerThanTheList() throws NotFoundException,
+            CorruptedDataException {
 
-        filmStorage.addFilm(newFilm);
-        Film newFilm2 = Film.builder()
-                .id(newFilm.getId() + 1)
-                .name("name")
-                .description("description")
-                .releaseDate(LocalDate.of(2001, 1, 1))
-                .duration(120)
-                .build();
+        for (int i = 0; i < 5; i++) {
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .likesNumber(i)
+                    .build();
+            filmStorage.addFilm(film);
+        }
 
-        Assertions.assertThrows(NotFoundException.class, () -> filmStorage.updateFilm(newFilm2));
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3)
+        );
+
+        Assertions.assertEquals(filmStorage.getMostPopular("3"), films);
     }
 }

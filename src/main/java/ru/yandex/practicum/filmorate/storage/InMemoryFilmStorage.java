@@ -6,9 +6,7 @@ import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -22,54 +20,45 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film getFilm(Integer id) throws NotFoundException {
         if (!films.containsKey(id)) {
-            log.warn("При попытке найти фильм " + id + " возникает NotFoundException");
+            log.warn("Не удалось получить фильм {}", id);
             throw new NotFoundException("Фильм " + id + " не найден");
         }
 
         return films.get(id);
     }
 
+    @Override
+    public List<Film> getMostPopular(String count) {
+        int sizeOfTop =  Integer.parseInt(count);
+
+        List<Film> resultList = films.values().stream()
+                .sorted(Comparator.comparing(Film::getLikesNumber).reversed())
+                .toList();
+        if (sizeOfTop >= resultList.size()) {
+            return resultList;
+        } else {
+            return resultList.subList(0, sizeOfTop);
+        }
+    }
+
     public void addFilm(Film film) throws CorruptedDataException {
         if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-            log.warn("При попытке добавить фильм " + film.getId() + " возникает CorruptedDataException");
+            log.warn("Не удалось добавить новый фильм");
             throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
         }
         film.setId(getNextId());
 
         films.put(film.getId(), film);
-        log.info("Новый фильм успешно добавлен");
-    }
-
-    public void updateFilm(Film film) throws NotFoundException, CorruptedDataException {
-        if (films.containsKey(film.getId())) {
-            Film oldFilm = films.get(film.getId());
-            if (film.getName() != null) {
-                oldFilm.setName(film.getName());
-            }
-            if (film.getDescription() != null) {
-                oldFilm.setDescription(film.getDescription());
-            }
-            if (film.getReleaseDate() != null) {
-                if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-                    log.warn("При попытке обновить фильм " + film.getId() + " возникает CorruptedDataException");
-                    throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
-                }
-                oldFilm.setReleaseDate(film.getReleaseDate());
-            }
-            if (film.getDuration() != null) {
-                oldFilm.setDuration(film.getDuration());
-            }
-
-            log.info("Фильм " + film.getId() + " успешно обновлён");
-        } else {
-            log.warn("При попытке обновить фильм " + film.getId() + " возникает NotFoundException");
-            throw new NotFoundException("Фильм " + film.getId() + " не найден");
-        }
     }
 
     @Override
     public void deleteFilm(Integer id) {
         films.remove(id);
+    }
+
+    @Override
+    public boolean contains(Integer id) {
+        return films.containsKey(id);
     }
 
     private int getNextId() {
