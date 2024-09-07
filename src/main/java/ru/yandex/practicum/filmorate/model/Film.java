@@ -19,7 +19,6 @@ public class Film {
     @Past LocalDate releaseDate;
     @Positive Integer duration;
     private Set<Integer> likedUsers;
-    private int likesNumber;
     public static final LocalDate EARLY_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
 
     public void addLike(Integer id) {
@@ -28,13 +27,11 @@ public class Film {
         }
 
         likedUsers.add(id);
-        likesNumber = likedUsers.size();
     }
 
     public void deleteLike(Integer id) {
         if (likedUsers != null) {
             likedUsers.remove(id);
-            likesNumber = likedUsers.size();
         }
     }
 }
