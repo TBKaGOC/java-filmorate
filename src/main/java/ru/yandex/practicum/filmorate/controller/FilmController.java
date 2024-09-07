@@ -1,75 +1,58 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
-    private final Map<Integer, Film> films = new HashMap<>();
+    private final FilmService service;
 
     @GetMapping
     public Collection<Film> getFilms() {
-        return films.values();
+        return service.getFilms();
+    }
+
+    @GetMapping("/{id}")
+    public Film getFilm(@PathVariable int id) throws NotFoundException {
+        return service.getFilm(id);
+    }
+
+    @GetMapping("/popular")
+    public Collection<Film> getMostPopular(@RequestParam(required = false, defaultValue = "10") String count) {
+        return service.getMostPopular(count);
     }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) throws CorruptedDataException {
-        if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-            log.warn("Фильм не может выйти раньше 28 декабря 1895 года");
-            throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
-        }
-        film.setId(getNextId());
-
-        films.put(film.getId(), film);
-        log.info("Новый фильм успешно добавлен");
+        service.addFilm(film);
         return film;
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) throws NotFoundException, CorruptedDataException {
-        if (films.containsKey(film.getId())) {
-            Film oldFilm = films.get(film.getId());
-            if (film.getName() != null) {
-                oldFilm.setName(film.getName());
-            }
-            if (film.getDescription() != null) {
-                oldFilm.setDescription(film.getDescription());
-            }
-            if (film.getReleaseDate() != null) {
-                if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-                    log.warn("Фильм не может выйти раньше 28 декабря 1895 года");
-                    throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
-                }
-                oldFilm.setReleaseDate(film.getReleaseDate());
-            }
-            if (film.getDuration() != null) {
-                oldFilm.setDuration(film.getDuration());
-            }
-
-            log.info("Фильм " + film.getId() + " успешно обновлён");
-            return oldFilm;
-        } else {
-            log.warn("Данный фильм не найден");
-            throw new NotFoundException("Данный фильм не найден");
-        }
+        service.updateFilm(film);
+        return service.getFilm(film.getId());
     }
 
-    private int getNextId() {
-        int currentMaxId = (int) films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/like/{userId}")
+    public Film likeFilm(@PathVariable int id, @PathVariable int userId) throws NotFoundException {
+        service.addLike(userId, id);
+        return service.getFilm(id);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void unlikeFilm(@PathVariable int id, @PathVariable int userId) throws NotFoundException {
+        service.deleteLike(userId, id);
     }
 }
