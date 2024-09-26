@@ -47,7 +47,7 @@ public class UserDbStorageTests {
 
     @Test
     public void testGetMutualFriends() {
-        Collection<User> mutualFriends= storage.getMutualFriend(1, 2);
+        Collection<User> mutualFriends = storage.getMutualFriend(1, 2);
 
         Assertions.assertNotNull(mutualFriends);
         Assertions.assertTrue(mutualFriends.contains(storage.getUser(3)));
