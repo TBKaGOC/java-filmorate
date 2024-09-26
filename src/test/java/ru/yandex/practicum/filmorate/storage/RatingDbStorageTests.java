@@ -19,6 +19,7 @@ import java.util.Collection;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class RatingDbStorageTests {
     private final RatingDbStorage storage;
+
     @Test
     public void testGetAllFilms() {
         Collection<Rating> ratings = storage.getRatings();

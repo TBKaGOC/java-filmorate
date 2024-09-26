@@ -18,8 +18,8 @@ import java.util.Collection;
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class GenreDbStorageTests {
-
     private final GenreDbStorage storage;
+
     @Test
     public void testGetAllFilms() {
         Collection<Genre> genres = storage.getGenres();
