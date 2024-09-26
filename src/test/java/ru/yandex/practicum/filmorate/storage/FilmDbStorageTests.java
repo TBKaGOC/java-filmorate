@@ -10,13 +10,12 @@ import org.springframework.context.annotation.ComponentScan;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.storage.dao.FilmDbStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @JdbcTest
 @ComponentScan("ru.yandex.practicum.filmorate")
@@ -26,7 +25,7 @@ public class FilmDbStorageTests {
     private final FilmDbStorage storage;
 
     @Test
-    public void testGetAllFilms() {
+    public void testGetAllFilms() throws NotFoundException {
         Collection<Film> films = storage.getFilms();
 
         Assertions.assertFalse(films.isEmpty());
@@ -58,7 +57,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
                 .build();
 
         storage.addFilm(film);
@@ -75,7 +74,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
                 .build();
 
         storage.addFilm(film);
@@ -94,7 +93,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
                 .build();
 
         storage.addFilm(film);
@@ -106,7 +105,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now().minusDays(12))
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
                 .build();
         storage.updateFilm(film2);
 
@@ -127,7 +126,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparing(Genre::getId)))
                 .build();
 
         storage.addFilm(film);
@@ -148,7 +147,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new HashSet<>())
+                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
                 .build();
 
         storage.addFilm(film);

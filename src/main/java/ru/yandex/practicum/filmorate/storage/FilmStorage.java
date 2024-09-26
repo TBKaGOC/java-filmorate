@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface FilmStorage {
-    Collection<Film> getFilms();
+    Collection<Film> getFilms() throws NotFoundException;
 
     Film getFilm(Integer id) throws NotFoundException;
 

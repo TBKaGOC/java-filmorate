@@ -41,7 +41,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getFilms() {
+    public Collection<Film> getFilms() throws NotFoundException {
+        Collection<Film> films = new ArrayList<>();
+        for (Film e : findMany(FIND_ALL)) {
+            foldFilm(e.getId(), e);
+            films.add(e);
+        }
         return findMany(FIND_ALL);
     }
 
@@ -51,17 +56,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         if (film.isPresent()) {
             Film result = film.get();
-            List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
-                    Integer.class, id);
-            List<Integer> genres = jdbc.queryForList("SELECT genre_id FROM film_genre WHERE film_id = ?",
-                    Integer.class, id);
-            Set<Genre> resultGenres = new HashSet<>();
-
-            for (Integer genre: genres) {
-                resultGenres.add(genreStorage.getGenre(genre));
-            }
-            result.setGenres(resultGenres);
-            result.setLikedUsers(Set.copyOf(likes));
+            foldFilm(id, result);
 
             return result;
         } else {
@@ -69,6 +64,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw new NotFoundException("Фильм " + id + " не найден");
         }
     }
+
+
 
     @Override
     public List<Film> getMostPopular(String count) {
@@ -139,5 +136,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public boolean contains(Integer id) {
         return findOne(FIND_BY_ID_QUERY, id).isPresent();
+    }
+
+    private void foldFilm(Integer id, Film result) throws NotFoundException {
+        List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
+                Integer.class, id);
+        List<Integer> genres = jdbc.queryForList(
+                "SELECT genre_id FROM film_genre WHERE film_id = ?",
+                Integer.class, id);
+        Set<Genre> resultGenres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+
+        for (Integer genre: genres) {
+            resultGenres.add(genreStorage.getGenre(genre));
+        }
+        result.setGenres(resultGenres);
+        result.setLikedUsers(Set.copyOf(likes));
     }
 }

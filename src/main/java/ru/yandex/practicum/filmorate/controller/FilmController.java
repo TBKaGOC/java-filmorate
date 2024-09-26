@@ -17,7 +17,7 @@ public class FilmController {
     private final FilmService service;
 
     @GetMapping
-    public Collection<FilmDto> getFilms() {
+    public Collection<FilmDto> getFilms() throws NotFoundException {
         return service.getFilms();
     }
 
@@ -34,7 +34,7 @@ public class FilmController {
     @PostMapping
     public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException {
         service.addFilm(film);
-        return film;
+        return service.getFilm(film.getId());
     }
 
     @PutMapping
@@ -43,13 +43,13 @@ public class FilmController {
     }
 
     @PutMapping("/{film_id}/like/{id}")
-    public FilmDto likeFilm(@PathVariable int filmId, @PathVariable int id) throws NotFoundException {
+    public FilmDto likeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.addLike(id, filmId);
         return service.getFilm(filmId);
     }
 
     @DeleteMapping("/{film_id}/like/{id}")
-    public void unlikeFilm(@PathVariable int filmId, @PathVariable int id) throws NotFoundException {
+    public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
     }
 }
