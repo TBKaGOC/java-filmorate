@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class UserStorageTests {
     }
 
     @Test
-    public void shouldWeGetAllUsers() throws DuplicatedDataException {
+    public void shouldWeGetAllUsers() throws DuplicatedDataException, NotFoundException {
         Collection<User> userCollection = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -89,7 +90,7 @@ public class UserStorageTests {
     }
 
     @Test
-    public void shouldWeGetExceptionWithDuplicateEmail() throws DuplicatedDataException {
+    public void shouldWeGetExceptionWithDuplicateEmail() throws DuplicatedDataException, NotFoundException {
         User newUser = User.builder()
                 .login("login")
                 .email("rightemail@email.right")
@@ -107,7 +108,7 @@ public class UserStorageTests {
     }
 
     @Test
-    public void shouldWeGetExceptionWithDuplicateLogin() throws DuplicatedDataException {
+    public void shouldWeGetExceptionWithDuplicateLogin() throws DuplicatedDataException, NotFoundException {
         User newUser = User.builder()
                 .login("login")
                 .email("rightemail@email.right")
@@ -151,8 +152,8 @@ public class UserStorageTests {
         service.addFriend(user3.getId(), user1.getId());
         service.addFriend(user3.getId(), user2.getId());
 
-        Assertions.assertTrue(user3.getFriends().contains(user1.getId()));
-        Assertions.assertTrue(user3.getFriends().contains(user2.getId()));
+        Assertions.assertTrue(user1.getFriends().contains(user3.getId()));
+        Assertions.assertTrue(user2.getFriends().contains(user3.getId()));
 
         Assertions.assertTrue(userStorage.getMutualFriend(user1.getId(), user2.getId()).contains(user3));
     }

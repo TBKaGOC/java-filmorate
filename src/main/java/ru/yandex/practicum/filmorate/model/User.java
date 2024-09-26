@@ -8,26 +8,28 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Data
 @Builder
+@EqualsAndHashCode(of = {"id"})
 public class User {
-    @EqualsAndHashCode.Include
     Integer id;
     @Email String email;
     @NotBlank String login;
     String name;
     @Past LocalDate birthday;
-    Set<Integer> friends;
+    Map<Integer, Boolean> friends;
 
-    public void addFriend(User user) {
+    public void addFriend(User user, boolean confirmed) {
         if (friends == null) {
-            friends = new HashSet<>();
+            friends = new HashMap<>();
         }
 
-        friends.add(user.getId());
+        friends.put(user.getId(), confirmed);
     }
 
     public void deleteFriend(User user) {
@@ -41,6 +43,10 @@ public class User {
             return new HashSet<>();
         }
 
-        return friends;
+        return friends.keySet();
+    }
+
+    public boolean isFriendConfirm(Integer friendId) {
+        return friends.get(friendId);
     }
 }

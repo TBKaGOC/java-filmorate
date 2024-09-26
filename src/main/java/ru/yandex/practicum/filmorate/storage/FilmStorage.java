@@ -14,9 +14,15 @@ public interface FilmStorage {
 
     List<Film> getMostPopular(String count);
 
-    void addFilm(Film film) throws CorruptedDataException;
+    Integer addFilm(Film film) throws CorruptedDataException, NotFoundException;
+
+    void updateFilm(Film film);
 
     void deleteFilm(Integer id);
+
+    void addLike(int likedUser, int film) throws NotFoundException;
+
+    void deleteLike(int unlikedUser, int film) throws NotFoundException;
 
     boolean contains(Integer id);
 }
