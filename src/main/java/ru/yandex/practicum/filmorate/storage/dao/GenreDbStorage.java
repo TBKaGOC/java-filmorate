@@ -8,13 +8,13 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @Component
 @Slf4j
 public class GenreDbStorage extends BaseDbStorage<Genre> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM genre";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM genre WHERE genre_id = ?";
+    private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ?) AS b";
 
     public GenreDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
@@ -25,22 +25,15 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
     }
 
     public Genre getGenre(Integer id) throws NotFoundException {
-        Optional<Genre> genre = findOne(FIND_BY_ID_QUERY, id);
-
-        if (genre.isPresent()) {
-            return genre.get();
-        } else {
+        try {
+            return findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Не найден жанр " + id));
+        } catch (NotFoundException e) {
             log.warn("Не удалось получить жанр {}", id);
-            throw new NotFoundException("Жанр " + id + " не найден");
+            throw e;
         }
     }
 
     public boolean contains(Integer id) {
-        try {
-            getGenre(id);
-            return true;
-        } catch (NotFoundException e) {
-            return false;
-        }
+        return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
     }
 }

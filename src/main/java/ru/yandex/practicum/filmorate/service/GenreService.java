@@ -16,17 +16,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GenreService {
     private final GenreDbStorage storage;
+    private final GenreMapper mapper;
 
-    public Collection<GenreDto> getGenres() throws NotFoundException {
+    public Collection<GenreDto> getGenres() {
         List<GenreDto> list = new ArrayList<>();
         for (Genre genre : storage.getGenres()) {
-            GenreDto genreDto = GenreMapper.mapToGenreDto(genre);
+            GenreDto genreDto = mapper.mapToGenreDto(genre);
             list.add(genreDto);
         }
         return list;
     }
 
     public GenreDto getGenre(Integer id) throws NotFoundException {
-        return GenreMapper.mapToGenreDto(storage.getGenre(id));
+        return mapper.mapToGenreDto(storage.getGenre(id));
     }
 }

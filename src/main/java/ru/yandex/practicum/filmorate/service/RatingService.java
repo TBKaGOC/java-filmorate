@@ -14,12 +14,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RatingService {
     private final RatingDbStorage storage;
+    private final RatingMapper mapper;
 
     public Collection<RatingDto> getRatings() {
-        return storage.getRatings().stream().map(RatingMapper::mapToRatingDto).collect(Collectors.toList());
+        return storage.getRatings().stream().map(mapper::mapToRatingDto).collect(Collectors.toList());
     }
 
     public RatingDto getRating(Integer id) throws NotFoundException {
-        return RatingMapper.mapToRatingDto(storage.getRating(id));
+        return mapper.mapToRatingDto(storage.getRating(id));
     }
 }

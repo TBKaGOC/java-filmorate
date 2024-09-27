@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryUserStorage;
@@ -21,7 +22,7 @@ public class FilmServiceTests {
     @BeforeEach
     public void createNewService() {
         storage = new InMemoryUserStorage();
-        service = new FilmService(new InMemoryFilmStorage(), storage);
+        service = new FilmService(new InMemoryFilmStorage(), storage, new FilmMapper());
     }
 
     @Test

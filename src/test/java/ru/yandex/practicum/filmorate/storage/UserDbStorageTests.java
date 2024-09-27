@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.UserDbStorage;
 
@@ -30,7 +31,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testGetUser() {
+    public void testGetUser() throws NotFoundException {
         User user = storage.getUser(1);
 
         Assertions.assertNotNull(user);
@@ -38,7 +39,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testGetFriends() {
+    public void testGetFriends() throws NotFoundException {
         Collection<User> friends = storage.getFriends(1);
 
         Assertions.assertNotNull(friends);
@@ -46,7 +47,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testGetMutualFriends() {
+    public void testGetMutualFriends() throws NotFoundException {
         Collection<User> mutualFriends = storage.getMutualFriend(1, 2);
 
         Assertions.assertNotNull(mutualFriends);
@@ -54,7 +55,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testAddUser() {
+    public void testAddUser() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -69,7 +70,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testAddFriend() {
+    public void testAddFriend() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -86,7 +87,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testAddFriendNotConfirmed() {
+    public void testAddFriendNotConfirmed() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -102,7 +103,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testUpdateUser() {
+    public void testUpdateUser() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -131,7 +132,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testDeleteUser() {
+    public void testDeleteUser() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -150,7 +151,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testDeleteFriend() {
+    public void testDeleteFriend() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -173,7 +174,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testDeleteFriendNotConfirmed() {
+    public void testDeleteFriendNotConfirmed() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")
@@ -194,7 +195,7 @@ public class UserDbStorageTests {
     }
 
     @Test
-    public void testNotDeleteFriendNotConfirmed() {
+    public void testNotDeleteFriendNotConfirmed() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")

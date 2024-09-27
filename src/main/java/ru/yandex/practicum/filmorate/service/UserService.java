@@ -21,14 +21,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserService {
     private final UserStorage storage;
+    private final UserMapper mapper;
 
     public Collection<UserDto> getUsers() {
-        return storage.getUsers().stream().map(UserMapper::mapToUserDto).collect(Collectors.toList());
+        return storage.getUsers().stream().map(mapper::mapToUserDto).collect(Collectors.toList());
     }
 
     public UserDto getUser(Integer id) throws NotFoundException {
         if (storage.contains(id)) {
-            return UserMapper.mapToUserDto(storage.getUser(id));
+            return mapper.mapToUserDto(storage.getUser(id));
         } else {
             log.warn("Не удалось получить пользователя {}", id);
             throw new NotFoundException("Пользователь " + id + " не найден");
@@ -40,11 +41,11 @@ public class UserService {
             log.warn("Не удалось получить друзей пользователя {}", id);
             throw new NotFoundException("Пользователь " + id + " не найден");
         }
-        return storage.getFriends(id).stream().map(UserMapper::mapToUserDto).collect(Collectors.toList());
+        return storage.getFriends(id).stream().map(mapper::mapToUserDto).collect(Collectors.toList());
     }
 
     public void addUser(UserDto user) throws DuplicatedDataException, NotFoundException {
-        int id = storage.addUser(UserMapper.mapToUser(user));
+        int id = storage.addUser(mapper.mapToUser(user));
         log.info("Успешно добавлен новый пользователь {}", id);
         user.setId(id);
     }
@@ -69,7 +70,7 @@ public class UserService {
             recipientUser.addFriend(senderUser, false);
             storage.addFriend(senderUser, recipientUser, false);
         }
-        return List.of(UserMapper.mapToUserDto(senderUser), UserMapper.mapToUserDto(recipientUser));
+        return List.of(mapper.mapToUserDto(senderUser), mapper.mapToUserDto(recipientUser));
     }
 
     public UserDto updateUser(UserDto user) throws NotFoundException, DuplicatedDataException {
@@ -112,7 +113,7 @@ public class UserService {
             storage.updateUser(oldUser);
 
             log.info("Пользователь " + user.getId() + " успешно обновлён");
-            return UserMapper.mapToUserDto(oldUser);
+            return mapper.mapToUserDto(oldUser);
         } else {
             log.warn("Не удалось обновить пользователя {}", user.getId());
             throw new NotFoundException("Пользователь " + user.getId() + " не найден");
@@ -138,6 +139,6 @@ public class UserService {
     }
 
     public Set<UserDto> getMutualFriend(Integer user1, Integer user2) throws NotFoundException {
-        return storage.getMutualFriend(user1, user2).stream().map(UserMapper::mapToUserDto).collect(Collectors.toSet());
+        return storage.getMutualFriend(user1, user2).stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
     }
 }

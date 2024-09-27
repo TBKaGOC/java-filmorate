@@ -7,9 +7,8 @@ import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.model.Film;
 
 @Component
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilmMapper {
-    public static FilmDto mapToFilmDto(Film film) {
+    public FilmDto mapToFilmDto(Film film) {
         return FilmDto.builder()
                 .id(film.getId())
                 .name(film.getName())
@@ -22,7 +21,7 @@ public class FilmMapper {
                 .build();
     }
 
-    public static Film mapToFilm(FilmDto film) {
+    public Film mapToFilm(FilmDto film) {
         return Film.builder()
                 .id(film.getId())
                 .name(film.getName())

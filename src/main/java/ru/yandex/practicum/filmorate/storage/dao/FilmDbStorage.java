@@ -29,6 +29,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE id = ?";
     private static final String DELETE_QUERY = "DELETE FROM films WHERE id = ?";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM liked_user WHERE film_id = ? AND user_id = ?";
+    private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
 
@@ -47,21 +48,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             foldFilm(e.getId(), e);
             films.add(e);
         }
-        return findMany(FIND_ALL);
+        return films;
     }
 
     @Override
     public Film getFilm(Integer id) throws NotFoundException {
-        Optional<Film> film = findOne(FIND_BY_ID_QUERY, id);
+        try {
+            Film film = findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Не найден фильм " + id));
+            foldFilm(id, film);
 
-        if (film.isPresent()) {
-            Film result = film.get();
-            foldFilm(id, result);
-
-            return result;
-        } else {
+            return film;
+        } catch (NotFoundException e) {
             log.warn("Не удалось получить фильм {}", id);
-            throw new NotFoundException("Фильм " + id + " не найден");
+            throw e;
         }
     }
 
@@ -96,13 +95,24 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         film.setId(id);
 
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            StringBuilder addGenreQuery = new StringBuilder();
+            StringBuilder containsGenreQuery = new StringBuilder();
             for (Genre genre : film.getGenres()) {
-                if (!genreStorage.contains(genre.getId())) {
-                    log.warn("Не удалось добавить фильм {}", film.getId());
-                    throw new CorruptedDataException("Рейтинг " + genre.getId() + " не найден");
-                }
-                update(ADD_GENRE_QUERY, id, genre.getId());
+                containsGenreQuery.append("SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ")
+                        .append(genre.getId())
+                        .append(") AS b;");
+                addGenreQuery.append("INSERT INTO film_genre (film_id, genre_id) VALUES (")
+                        .append(film.getId())
+                        .append(", ")
+                        .append(genre.getId())
+                        .append(");");
             }
+            List<Boolean> contained = jdbc.queryForList(containsGenreQuery.toString(), Boolean.class);
+            if (contained.contains(false)) {
+                log.warn("Не удалось добавить фильм {}", film.getId());
+                throw new CorruptedDataException("Жанры не найден");
+            }
+            update(addGenreQuery.toString());
         }
         return id;
     }
@@ -135,7 +145,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public boolean contains(Integer id) {
-        return findOne(FIND_BY_ID_QUERY, id).isPresent();
+        return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
     }
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {

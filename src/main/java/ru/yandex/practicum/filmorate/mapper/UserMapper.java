@@ -10,9 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
-    public static UserDto mapToUserDto(User user) {
+    public UserDto mapToUserDto(User user) {
         Map<Integer, Boolean> friends = new HashMap<>();
 
         for (Integer friendId : user.getFriends()) {
@@ -29,7 +28,7 @@ public class UserMapper {
                 .build();
     }
 
-    public static User mapToUser(UserDto user) {
+    public User mapToUser(UserDto user) {
         Map<Integer, Boolean> result = new HashMap<>();
 
         for (Integer id: user.getFriends()) {

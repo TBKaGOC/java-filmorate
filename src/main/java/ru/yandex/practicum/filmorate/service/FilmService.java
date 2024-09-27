@@ -20,18 +20,19 @@ import java.util.stream.Collectors;
 public class FilmService {
     private final FilmStorage storage;
     private final UserStorage userStorage;
+    private final FilmMapper mapper;
 
     public Collection<FilmDto> getFilms() throws NotFoundException {
-        return storage.getFilms().stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+        return storage.getFilms().stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
     }
 
     public FilmDto getFilm(int id) throws NotFoundException {
 
-        return FilmMapper.mapToFilmDto(storage.getFilm(id));
+        return mapper.mapToFilmDto(storage.getFilm(id));
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
-        int id = storage.addFilm(FilmMapper.mapToFilm(film));
+        int id = storage.addFilm(mapper.mapToFilm(film));
         log.info("Успешно добавлен новый фильм {}", film.getId());
         film.setId(id);
     }
@@ -58,7 +59,7 @@ public class FilmService {
 
             log.info("Успешно обновлён фильм {}", film.getId());
 
-            return FilmMapper.mapToFilmDto(oldFilm);
+            return mapper.mapToFilmDto(oldFilm);
         } else {
             log.warn("Не удалось обновить фильм {}", film.getId());
             throw new NotFoundException("Фильм " + film.getId() + " не найден");
@@ -84,6 +85,6 @@ public class FilmService {
     }
 
     public List<FilmDto> getMostPopular(String count) {
-        return storage.getMostPopular(count).stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+        return storage.getMostPopular(count).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
     }
 }

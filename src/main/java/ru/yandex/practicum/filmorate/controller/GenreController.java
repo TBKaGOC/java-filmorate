@@ -18,7 +18,7 @@ public class GenreController {
     private final GenreService service;
 
     @GetMapping
-    public Collection<GenreDto> getGenres() throws NotFoundException {
+    public Collection<GenreDto> getGenres() {
         return service.getGenres();
     }
 

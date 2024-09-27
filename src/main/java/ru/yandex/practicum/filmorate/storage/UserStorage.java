@@ -24,7 +24,7 @@ public interface UserStorage {
 
     void deleteUser(Integer id);
 
-    void deleteFriend(Integer recipient, Integer sender);
+    void deleteFriend(Integer recipient, Integer sender) throws NotFoundException;
 
     boolean contains(Integer id);
 }

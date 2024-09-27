@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryUserStorage;
@@ -20,7 +21,7 @@ public class UserStorageTests {
     @BeforeEach
     public void createNewUserController() {
         userStorage = new InMemoryUserStorage();
-        service = new UserService(userStorage);
+        service = new UserService(userStorage, new UserMapper());
     }
 
     @Test

@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -34,6 +34,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final String DELETE_QUERY = "DELETE FROM users WHERE id = ?";
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? AND sender = ?" +
             "OR sender = ? AND recipient = ? AND confirmed = ?";
+    private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM users WHERE id = ?) AS b";
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -45,16 +46,21 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public User getUser(Integer id) {
-        Optional<User> user = findOne(FIND_BY_ID_QUERY, id);
-        Collection<User> friends = getFriends(id);
-        User resultUser = user.orElseThrow(RuntimeException::new);
+    public User getUser(Integer id) throws NotFoundException {
+        try {
+            Collection<User> friends = getFriends(id);
+            User user = findOne(FIND_BY_ID_QUERY, id)
+                    .orElseThrow(() -> new NotFoundException("Не найден пользователь " + id));
 
-        for (User friend: friends) {
-            resultUser.addFriend(friend, true);
+            for (User friend : friends) {
+                user.addFriend(friend, true);
+            }
+
+            return user;
+        } catch (NotFoundException e) {
+            log.warn("Не удалось получить пользователя {}", id);
+            throw e;
         }
-
-       return resultUser;
     }
 
     @Override
@@ -68,7 +74,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public Integer addUser(User user) {
+    public Integer addUser(User user) throws NotFoundException {
         int id = (int) insert(ADD_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
         user.setId(id);
 
@@ -108,7 +114,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public void deleteFriend(Integer recipient, Integer sender) {
+    public void deleteFriend(Integer recipient, Integer sender) throws NotFoundException {
         if (getFriends(recipient).contains(getUser(sender)) || getFriends(sender).contains(getUser(recipient))) {
             update(DELETE_FRIEND_QUERY, recipient, sender, recipient, sender, true);
         }
@@ -116,6 +122,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public boolean contains(Integer id) {
-        return findOne(FIND_BY_ID_QUERY, id).isPresent();
+        return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
     }
 }

@@ -8,13 +8,13 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @Component
 @Slf4j
 public class RatingDbStorage extends BaseDbStorage<Rating> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM rating";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM rating WHERE rating_id = ?";
+    private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT rating_id FROM rating WHERE rating_id = ?) AS b";
 
     public RatingDbStorage(JdbcTemplate jdbc, RowMapper<Rating> mapper) {
         super(jdbc, mapper);
@@ -25,17 +25,15 @@ public class RatingDbStorage extends BaseDbStorage<Rating> {
     }
 
     public Rating getRating(Integer id) throws NotFoundException {
-        Optional<Rating> rating = findOne(FIND_BY_ID_QUERY, id);
-
-        if (rating.isPresent()) {
-            return rating.get();
-        } else {
+        try {
+            return findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Не найден рейтинг " + id));
+        } catch (NotFoundException e) {
             log.warn("Не удалось получить рейтинг {}", id);
-            throw new NotFoundException("Рейтинг " + id + " не найден");
+            throw e;
         }
     }
 
     public boolean contains(Integer id) {
-        return findOne(FIND_BY_ID_QUERY, id).isPresent();
+        return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
     }
 }

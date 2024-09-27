@@ -57,7 +57,7 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.now())
                 .likedUsers(new HashSet<>())
                 .rating(Rating.builder().id(3).name("PG-13").build())
-                .genres(new TreeSet<>(Comparator.comparingInt(Genre::getId)))
+                .genres(Set.of(Genre.builder().id(1).build(), Genre.builder().id(3).build()))
                 .build();
 
         storage.addFilm(film);
