@@ -16,9 +16,15 @@ public interface UserStorage {
 
     Set<User> getMutualFriend(Integer id1, Integer id2) throws NotFoundException;
 
-    void addUser(User user) throws DuplicatedDataException;
+    Integer addUser(User user) throws DuplicatedDataException, NotFoundException;
+
+    void addFriend(User recipient, User sender, Boolean confirmed);
+
+    void updateUser(User user) throws DuplicatedDataException;
 
     void deleteUser(Integer id);
+
+    void deleteFriend(Integer recipient, Integer sender) throws NotFoundException;
 
     boolean contains(Integer id);
 }

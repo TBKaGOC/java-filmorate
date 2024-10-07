@@ -1,17 +1,20 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.storage.in_memory;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
+@Qualifier("InMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
 
@@ -62,7 +65,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public void addUser(User user) throws DuplicatedDataException {
+    public Integer addUser(User user) throws DuplicatedDataException {
         for (User user1: users.values()) {
             if (StringUtils.equals(user.getEmail(), user1.getEmail())) {
                 log.warn("Не удалось добавить нового пользователя");
@@ -79,11 +82,28 @@ public class InMemoryUserStorage implements UserStorage {
         user.setId(getNextId());
 
         users.put(user.getId(), user);
+        return user.getId();
+    }
+
+    @Override
+    public void addFriend(User recipient, User sender, Boolean confirmed) {
+        return;
+    }
+
+    @Override
+    public void updateUser(User user) throws DuplicatedDataException {
+        deleteUser(user.getId());
+        addUser(user);
     }
 
     @Override
     public void deleteUser(Integer id) {
         users.remove(id);
+    }
+
+    @Override
+    public void deleteFriend(Integer recipient, Integer sender) {
+        return;
     }
 
     @Override

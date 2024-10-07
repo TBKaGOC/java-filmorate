@@ -1,18 +1,22 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.storage.in_memory;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
 
 @Component
 @Slf4j
+@Qualifier("InMemoryFilmStorage")
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films = new HashMap<>();
 
+    @Override
     public Collection<Film> getFilms() {
         return films.values();
     }
@@ -41,7 +45,8 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
     }
 
-    public void addFilm(Film film) throws CorruptedDataException {
+    @Override
+    public Integer addFilm(Film film) throws CorruptedDataException {
         if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
             log.warn("Не удалось добавить новый фильм");
             throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
@@ -49,11 +54,27 @@ public class InMemoryFilmStorage implements FilmStorage {
         film.setId(getNextId());
 
         films.put(film.getId(), film);
+        return film.getId();
+    }
+
+    @Override
+    public void updateFilm(Film film) {
+
     }
 
     @Override
     public void deleteFilm(Integer id) {
         films.remove(id);
+    }
+
+    @Override
+    public void addLike(int likedUser, int film) throws NotFoundException {
+        getFilm(film).addLike(likedUser);
+    }
+
+    @Override
+    public void deleteLike(int unlikedUser, int film) throws NotFoundException {
+        getFilm(film).deleteLike(unlikedUser);
     }
 
     @Override

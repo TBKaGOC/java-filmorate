@@ -6,11 +6,10 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryFilmStorage;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class FilmStorageTests {
     private FilmStorage filmStorage;
@@ -21,7 +20,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetAllFilms() throws CorruptedDataException {
+    public void shouldWeGetAllFilms() throws CorruptedDataException, NotFoundException {
         Collection<Film> filmCollection = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -68,12 +67,18 @@ public class FilmStorageTests {
     @Test
     public void shouldWeGetMostPopularFilms() throws NotFoundException, CorruptedDataException {
         for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
             Film film = Film.builder()
                     .duration(1)
                     .releaseDate(LocalDate.now())
                     .description("description")
                     .name("film")
-                    .likesNumber(i)
+                    .likedUsers(likedUser)
                     .build();
             filmStorage.addFilm(film);
         }
@@ -93,12 +98,18 @@ public class FilmStorageTests {
     public void shouldWeGetMostPopularFilmsWithATopSizeLargerThanTheList() throws NotFoundException,
             CorruptedDataException {
         for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
             Film film = Film.builder()
                     .duration(1)
                     .releaseDate(LocalDate.now())
                     .description("description")
                     .name("film")
-                    .likesNumber(i)
+                    .likedUsers(likedUser)
                     .build();
             filmStorage.addFilm(film);
         }
@@ -117,14 +128,19 @@ public class FilmStorageTests {
     @Test
     public void shouldWeGetMostPopularFilmsWithATopSizeSmallerThanTheList() throws NotFoundException,
             CorruptedDataException {
-
         for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
             Film film = Film.builder()
                     .duration(1)
                     .releaseDate(LocalDate.now())
                     .description("description")
                     .name("film")
-                    .likesNumber(i)
+                    .likedUsers(likedUser)
                     .build();
             filmStorage.addFilm(film);
         }
