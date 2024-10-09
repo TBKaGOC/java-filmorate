@@ -48,6 +48,11 @@ public class FilmController {
         return service.getFilm(filmId);
     }
 
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable int filmId) {
+        service.deleteFilm(filmId);
+    }
+
     @DeleteMapping("/{film_id}/like/{id}")
     public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);

@@ -21,13 +21,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM films WHERE id = ?";
     private static final String FIND_MOST_POPULAR_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
     private static final String ADD_QUERY = "INSERT INTO films (name, description, release_date, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
-    private static final String ADD_GENRE_QUERY = "INSERT INTO film_genre (film_id, genre_id) " +
-            "VALUES (?, ?)";
     private static final String ADD_LIKE_QUERY = "INSERT INTO liked_user (film_id, user_id) VALUES (?, ?)";
 
     private static final String UPDATE_FILM_QUERY = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
             "WHERE id = ?";
     private static final String DELETE_QUERY = "DELETE FROM films WHERE id = ?";
+
+    private static final String DELETE_FROM_GENRE_QUERY = "DELETE FROM film_genre WHERE film_id = ?";
+
+    private static final String DELETE_FROM_LIKED_USER_QUERY = "DELETE FROM liked_user WHERE film_id = ?";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM liked_user WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
     private final RatingDbStorage ratingStorage;
@@ -130,6 +132,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public void deleteFilm(Integer id) {
+        delete(DELETE_FROM_LIKED_USER_QUERY, id);
+        delete(DELETE_FROM_GENRE_QUERY, id);
         delete(DELETE_QUERY, id);
     }
 
