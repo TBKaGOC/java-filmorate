@@ -9,17 +9,17 @@ import lombok.Value;
 @Value
 @Builder(toBuilder = true)
 public class ReviewDto {
-    int id;
+    int reviewId;
 
     @NotBlank
     String content;
 
     @NotNull
-    ReviewType reviewType;
+    Boolean isPositive;
 
-    int filmId;
+    Integer filmId;
 
-    int userId;
+    Integer userId;
 
     int useful;
 }

@@ -222,6 +222,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         reviewDbStorage.deleteReviewLike(reviewId, userid);
     }
 
+    @Override
+    public List<Review> getReviews() {
+        return reviewDbStorage.getReviews();
+    }
+
+    @Override
+    public void updateReviewLike(int reviewId, int userid, int useful) {
+        reviewDbStorage.updateReviewLike(reviewId, userid, useful);
+    }
+
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",

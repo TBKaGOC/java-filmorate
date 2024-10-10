@@ -11,7 +11,7 @@ import lombok.Value;
 public class Review {
     Integer reviewId;
     @NotBlank String content;
-    @NotBlank String reviewType;
+    @NotNull Boolean isPositive;
     @NotNull Integer filmId;
     @NotNull Integer userId;
     @NotBlank Integer useful;

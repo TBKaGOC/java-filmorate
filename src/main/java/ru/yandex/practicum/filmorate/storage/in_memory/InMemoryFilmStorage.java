@@ -189,6 +189,35 @@ public class InMemoryFilmStorage implements FilmStorage {
                         .build());
     }
 
+    @Override
+    public List<Review> getReviews() {
+        return reviews.values().stream().toList();
+    }
+
+    @Override
+    public void updateReviewLike(int reviewId, int userid, int useful) {
+        if (!reviews.containsKey(reviewId))
+            return;
+
+        var review = reviews.get(reviewId);
+
+        if (!reviewsLikes.containsKey(reviewId))
+            return;
+
+        var likes = reviewsLikes.get(reviewId);
+
+        if (!likes.containsKey(userid))
+            return;
+
+        likes.replace(userid, useful);
+
+        reviews.replace(
+                reviewId,
+                review.toBuilder()
+                        .useful(review.getUseful() - useful)
+                        .build());
+    }
+
     private <T> int getNextId(Map<Integer, T> map) {
         int currentMaxId = map.keySet()
                 .stream()

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,14 @@ public class ReviewService {
         return reviewMapper.mapToReviewDto(storage.getReview(id));
     }
 
+    public Collection<ReviewDto> getReviews() throws NotFoundException {
+        return storage
+                .getReviews()
+                .stream()
+                .map(reviewMapper::mapToReviewDto)
+                .collect(Collectors.toList());
+    }
+
     public Collection<ReviewDto> getMostPopular(int filmId, int count) {
         return storage
                 .getMostPopularReviews(filmId, count)
@@ -34,14 +43,26 @@ public class ReviewService {
     }
 
     public ReviewDto addReview(@Valid ReviewDto reviewDto) throws NotFoundException {
-        if (!storage.contains(reviewDto.getFilmId())) {
-            log.warn("Не удалось найти фильма {}", reviewDto.getFilmId());
-            throw new NotFoundException(String.format("Фильм \"%d\" не найден", reviewDto.getFilmId()));
+        log.trace(String.format("Request to add review \"%s\"", reviewDto));
+
+        var filmId = reviewDto.getFilmId();
+
+        if (filmId == null) {
+            log.warn("Не удалось найти фильма \"null\"");
+            throw new ValidationException("Фильм \"null\" не найден");
+        } else if (!storage.contains(filmId)) {
+            log.warn("Не удалось найти фильма {}", filmId);
+            throw new NotFoundException(String.format("Фильм \"%d\" не найден", filmId));
         }
 
-        if (!userStorage.contains(reviewDto.getUserId())) {
-            log.warn("Не удалось найти пользователя {}", reviewDto.getUserId());
-            throw new NotFoundException(String.format("Пользователь \"%d\" не найден", reviewDto.getUserId()));
+        var userId = reviewDto.getUserId();
+
+        if (userId == null) {
+            log.warn("Не удалось найти пользователя \"null\"");
+            throw new ValidationException("Пользователь \"null\" не найден");
+        } else if (!userStorage.contains(userId)) {
+            log.warn("Не удалось найти пользователя {}", userId);
+            throw new NotFoundException(String.format("Пользователь \"%d\" не найден", userId));
         }
 
         var id = storage.addReview(reviewMapper.mapToReview(reviewDto));
@@ -54,7 +75,9 @@ public class ReviewService {
     }
 
     public ReviewDto updateReview(ReviewDto reviewDto) throws NotFoundException {
-        var id = reviewDto.getId();
+        log.trace(String.format("Request to update review \"%s\"", reviewDto));
+
+        var id = reviewDto.getReviewId();
         if (!storage.containsReview(id)) {
             log.warn("Не удалось найти отзыв {}", id);
             throw new NotFoundException(String.format("Отзыв \"%d\" не найден", id));
@@ -62,10 +85,16 @@ public class ReviewService {
 
         storage.updateReview(reviewMapper.mapToReview(reviewDto));
 
-        return reviewMapper.mapToReviewDto(storage.getReview(id));
+        var result = reviewMapper.mapToReviewDto(storage.getReview(id));
+
+        log.trace(String.format("Success to update review \"%s\"", reviewDto));
+
+        return result;
     }
 
     public ReviewDto deleteReview(int id) throws NotFoundException {
+        log.trace(String.format("Request to delete reviewId \"%d\"", id));
+
         if (!storage.containsReview(id)) {
             log.warn("Не удалось найти отзыв {}", id);
             throw new NotFoundException(String.format("Отзыв \"%d\" не найден", id));
@@ -75,10 +104,21 @@ public class ReviewService {
 
         storage.deleteReview(id);
 
-        return reviewMapper.mapToReviewDto(deletedReview);
+        var result = reviewMapper.mapToReviewDto(deletedReview);
+
+        log.trace(String.format("Success to delete reviewId \"%d\"", id));
+
+        return result;
     }
 
     public void addLike(int reviewId, int userid, int useful) throws NotFoundException {
+        log.trace(
+                String.format(
+                        "Request to add like to reviewId \"%d\" from userId \"%s\" as useful \"%s\"",
+                        reviewId,
+                        userid,
+                        useful));
+
         if (!storage.containsReview(reviewId)) {
             log.warn("Не удалось найти отзыв {}", reviewId);
             throw new NotFoundException(String.format("Отзыв \"%d\" не найден", reviewId));
@@ -89,10 +129,27 @@ public class ReviewService {
             throw new NotFoundException(String.format("Пользователь \"%d\" не найден", userid));
         }
 
-        storage.addReviewLike(reviewId, userid, useful);
+        if (storage.containsReviewLike(reviewId, userid)) {
+            storage.updateReviewLike(reviewId, userid, useful);
+        } else {
+            storage.addReviewLike(reviewId, userid, useful);
+        }
+
+        log.trace(
+                String.format(
+                        "Success to add like to reviewId \"%d\" from userId \"%s\" as useful \"%s\"",
+                        reviewId,
+                        userid,
+                        useful));
     }
 
     public void deleteLike(int reviewId, int userid) throws NotFoundException {
+        log.trace(
+                String.format(
+                        "Request to delete like to reviewId \"%d\" from userId \"%s\"",
+                        reviewId,
+                        userid));
+
         if (!storage.containsReview(reviewId)) {
             log.warn("Не удалось найти отзыв {}", reviewId);
             throw new NotFoundException(String.format("Отзыв \"%d\" не найден", reviewId));
@@ -109,5 +166,11 @@ public class ReviewService {
         }
 
         storage.deleteReviewLike(reviewId, userid);
+
+        log.trace(
+                String.format(
+                        "Success to delete like to reviewId \"%d\" from userId \"%s\"",
+                        reviewId,
+                        userid));
     }
 }

@@ -17,8 +17,13 @@ import java.util.Collection;
 public class ReviewController {
     private final ReviewService service;
 
+//    @GetMapping
+//    public Collection<ReviewDto> getReviews() throws NotFoundException {
+//        return service.getReviews();
+//    }
+
     @GetMapping("/{id}")
-    public ReviewDto getReviews(@PathVariable int id) throws NotFoundException {
+    public ReviewDto getReview(@PathVariable int id) throws NotFoundException {
         return service.getReview(id);
     }
 

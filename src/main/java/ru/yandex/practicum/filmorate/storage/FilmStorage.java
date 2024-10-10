@@ -44,4 +44,8 @@ public interface FilmStorage {
     boolean containsReviewLike(int reviewId, int userid);
 
     void deleteReviewLike(int reviewId, int userid);
+
+    List<Review> getReviews();
+
+    void updateReviewLike(int reviewId, int userid, int useful);
 }

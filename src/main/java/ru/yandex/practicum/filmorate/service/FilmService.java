@@ -33,7 +33,7 @@ public class FilmService {
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
         int id = storage.addFilm(mapper.mapToFilm(film));
-        log.info("Успешно добавлен новый фильм {}", film.getId());
+        log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
     }
 
