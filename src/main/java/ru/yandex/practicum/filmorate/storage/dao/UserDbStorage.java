@@ -5,11 +5,15 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dto.FeedEventType;
+import ru.yandex.practicum.filmorate.dto.FeedOperationType;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Set;
 
 @Component
@@ -36,8 +40,15 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             "OR sender = ? AND recipient = ? AND confirmed = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM users WHERE id = ?) AS b";
 
-    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
+    private final FeedDbStorage feedDbStorage;
+
+    public UserDbStorage(
+            JdbcTemplate jdbc,
+            RowMapper<User> mapper,
+            FeedDbStorage feedDbStorage) {
         super(jdbc, mapper);
+
+        this.feedDbStorage = feedDbStorage;
     }
 
     @Override
@@ -100,6 +111,14 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         } else {
             update(ADD_FRIEND_QUERY, id, friendId, false);
         }
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(id)
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.FRIEND.name())
+                .operation(FeedOperationType.ADD.name())
+                .entityId(friendId)
+                .build());
     }
 
     @Override
@@ -110,6 +129,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void deleteUser(Integer id) {
+        feedDbStorage.deleteFeedByUserId(id);
+
         delete(DELETE_QUERY, id);
     }
 
@@ -117,11 +138,25 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     public void deleteFriend(Integer recipient, Integer sender) throws NotFoundException {
         if (getFriends(recipient).contains(getUser(sender)) || getFriends(sender).contains(getUser(recipient))) {
             update(DELETE_FRIEND_QUERY, recipient, sender, recipient, sender, true);
+
+            feedDbStorage.addFeed(Feed.builder()
+                    .userId(sender)
+                    .timestamp(new Date().getTime())
+                    .eventType(FeedEventType.FRIEND.name())
+                    .operation(FeedOperationType.REMOVE.name())
+                    .entityId(recipient)
+                    .build());
         }
     }
 
     @Override
     public boolean contains(Integer id) {
         return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
+    }
+
+    @Override
+    public Collection<Feed> getFeeds(int userId, String count) {
+        var limit = Integer.parseInt(count);
+        return feedDbStorage.getFeedByUserId(userId, limit);
     }
 }

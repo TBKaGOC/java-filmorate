@@ -5,8 +5,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dto.FeedEventType;
+import ru.yandex.practicum.filmorate.dto.FeedOperationType;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -32,13 +35,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
+    private final FeedDbStorage feedDbStorage;
 
 
     public FilmDbStorage(JdbcTemplate jdbc,
-                         RowMapper<Film> mapper, RatingDbStorage ratingStorage, GenreDbStorage genreStorage) {
+                         RowMapper<Film> mapper,
+                         RatingDbStorage ratingStorage,
+                         GenreDbStorage genreStorage,
+                         FeedDbStorage feedDbStorage) {
         super(jdbc, mapper);
         this.ratingStorage = ratingStorage;
         this.genreStorage = genreStorage;
+        this.feedDbStorage = feedDbStorage;
     }
 
     @Override
@@ -136,11 +144,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void addLike(int likedUser, int film) {
         update(ADD_LIKE_QUERY, film, likedUser);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(likedUser)
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.LIKE.name())
+                .operation(FeedOperationType.ADD.name())
+                .entityId(film)
+                .build());
     }
 
     @Override
     public void deleteLike(int unlikedUser, int film) {
         update(DELETE_LIKE_QUERY, film, unlikedUser);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(unlikedUser)
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.LIKE.name())
+                .operation(FeedOperationType.REMOVE.name())
+                .entityId(film)
+                .build());
     }
 
     @Override

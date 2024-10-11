@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.FeedDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.FeedMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserStorage storage;
     private final UserMapper mapper;
+    private final FeedMapper feedMapper;
 
     public Collection<UserDto> getUsers() {
         return storage.getUsers().stream().map(mapper::mapToUserDto).collect(Collectors.toList());
@@ -140,5 +143,18 @@ public class UserService {
 
     public Set<UserDto> getMutualFriend(Integer user1, Integer user2) throws NotFoundException {
         return storage.getMutualFriend(user1, user2).stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
+    }
+
+    public Collection<FeedDto> getFeeds(int userId, String count) {
+        log.trace(String.format("Request to get feeds userId %s and limit %s", userId, count));
+
+        var resultDTO = storage.getFeeds(userId, count);
+
+        var result = resultDTO
+                .stream()
+                .map(feedMapper::mapToFeedDto)
+                .toList();
+
+        return result;
     }
 }
