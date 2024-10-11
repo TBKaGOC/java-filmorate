@@ -82,6 +82,16 @@ public class InMemoryFilmStorage implements FilmStorage {
         return films.containsKey(id);
     }
 
+    @Override
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return films
+                .values()
+                .stream()
+                .filter(i -> i.getLikedUsers().contains(userId) && i.getLikedUsers().contains(friendId))
+                .sorted(Comparator.comparingInt(i -> -1 * i.getLikesNumber()))
+                .toList();
+    }
+
     private int getNextId() {
         int currentMaxId = (int) films.keySet()
                 .stream()

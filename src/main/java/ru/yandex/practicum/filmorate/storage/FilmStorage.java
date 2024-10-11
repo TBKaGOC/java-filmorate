@@ -25,4 +25,6 @@ public interface FilmStorage {
     void deleteLike(int unlikedUser, int film) throws NotFoundException;
 
     boolean contains(Integer id);
+
+    Collection<Film> getCommonFilms(int userId, int friendId);
 }

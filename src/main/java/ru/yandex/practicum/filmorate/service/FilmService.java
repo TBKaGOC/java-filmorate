@@ -27,14 +27,19 @@ public class FilmService {
     }
 
     public FilmDto getFilm(int id) throws NotFoundException {
+        log.trace("Request to getFilm by id = " + id);
 
-        return mapper.mapToFilmDto(storage.getFilm(id));
+        var result = mapper.mapToFilmDto(storage.getFilm(id));
+
+        log.trace("Result of getFilm = " + result);
+
+        return result;
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
         int id = storage.addFilm(mapper.mapToFilm(film));
-        log.info("Успешно добавлен новый фильм {}", film.getId());
         film.setId(id);
+        log.info("Успешно добавлен новый фильм {}", film);
     }
 
     public FilmDto updateFilm(FilmDto film) throws NotFoundException, CorruptedDataException {
@@ -86,5 +91,20 @@ public class FilmService {
 
     public List<FilmDto> getMostPopular(String count) {
         return storage.getMostPopular(count).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+    public Collection<FilmDto> getCommonFilms(int userId, int friendId) {
+        var result = storage.getCommonFilms(userId, friendId)
+                .stream()
+                .map(mapper::mapToFilmDto)
+                .collect(Collectors.toList());
+
+        log.trace(String.format("getCommonFilms: found %d rows ", result.size()));
+
+        for (var film: result) {
+            log.trace("getCommonFilms: found " + film);
+        }
+
+        return result;
     }
 }
