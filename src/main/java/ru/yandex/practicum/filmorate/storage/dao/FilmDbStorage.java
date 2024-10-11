@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
@@ -20,21 +21,44 @@ import java.util.*;
 @Slf4j
 @Primary
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
-    private static final String FIND_ALL = "SELECT * FROM films";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM films WHERE id = ?";
-    private static final String FIND_MOST_POPULAR_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id GROUP BY f.id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
-    private static final String ADD_QUERY = "INSERT INTO films (name, description, release_date, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
-    private static final String ADD_GENRE_QUERY = "INSERT INTO film_genre (film_id, genre_id) " +
-            "VALUES (?, ?)";
-    private static final String ADD_LIKE_QUERY = "INSERT INTO liked_user (film_id, user_id) VALUES (?, ?)";
-
-    private static final String UPDATE_FILM_QUERY = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
+    //Не проходило по длине checkStyle
+    private static final String FIND_ALL =
+            "SELECT * " +
+            "FROM films";
+    private static final String FIND_BY_ID_QUERY =
+            "SELECT * " +
+            "FROM films " +
             "WHERE id = ?";
-    private static final String DELETE_QUERY = "DELETE FROM films WHERE id = ?";
-    private static final String DELETE_LIKE_QUERY = "DELETE FROM liked_user WHERE film_id = ? AND user_id = ?";
-    private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
+    private static final String FIND_MOST_POPULAR_QUERY =
+            "SELECT id, name, description, release_date, duration, rating_id " +
+            "FROM films AS f " +
+            "    LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id " +
+            "GROUP BY f.id " +
+            "ORDER BY COUNT(l.user_id) " +
+            "DESC LIMIT ?";
+    private static final String ADD_QUERY =
+            "INSERT INTO films (name, description, release_date, duration, rating_id) " +
+            "VALUES (?, ?, ?, ?, ?)";
+    private static final String ADD_GENRE_QUERY =
+            "INSERT INTO film_genre (film_id, genre_id) " +
+            "VALUES (?, ?)";
+    private static final String ADD_LIKE_QUERY =
+            "INSERT INTO liked_user (film_id, user_id) " +
+            "VALUES (?, ?)";
+    private static final String UPDATE_FILM_QUERY =
+            "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
+            "WHERE id = ?";
+    private static final String DELETE_QUERY =
+            "DELETE FROM films WHERE id = ?";
+    private static final String DELETE_LIKE_QUERY =
+            "DELETE FROM liked_user " +
+            "WHERE film_id = ? AND user_id = ?";
+    private static final String CONTAINS_QUERY =
+            "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
+
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
+    private final ReviewDbStorage reviewDbStorage;
     private final FeedDbStorage feedDbStorage;
 
 
@@ -42,10 +66,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                          RowMapper<Film> mapper,
                          RatingDbStorage ratingStorage,
                          GenreDbStorage genreStorage,
+                         ReviewDbStorage reviewDbStorage,
                          FeedDbStorage feedDbStorage) {
         super(jdbc, mapper);
         this.ratingStorage = ratingStorage;
         this.genreStorage = genreStorage;
+        this.reviewDbStorage = reviewDbStorage;
         this.feedDbStorage = feedDbStorage;
     }
 
@@ -62,7 +88,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public Film getFilm(Integer id) throws NotFoundException {
         try {
-            Film film = findOne(FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Не найден фильм " + id));
+            Film film = findOne(FIND_BY_ID_QUERY, id)
+                    .orElseThrow(() -> new NotFoundException("Не найден фильм " + id));
             foldFilm(id, film);
 
             return film;
@@ -171,6 +198,62 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public boolean contains(Integer id) {
         return jdbc.queryForList(CONTAINS_QUERY, Boolean.class, id).getFirst();
     }
+
+    @Override
+    public Review getReview(int reviewId) throws NotFoundException {
+        return reviewDbStorage.getReview(reviewId);
+    }
+
+    @Override
+    public List<Review> getMostPopularReviews(int filmId, int count) {
+        return reviewDbStorage.getMostPopularReviews(filmId, count);
+    }
+
+    @Override
+    public int addReview(Review review) {
+        return reviewDbStorage.addReview(review);
+    }
+
+    @Override
+    public boolean containsReview(int id) {
+        return reviewDbStorage.contains(id);
+    }
+
+    @Override
+    public void updateReview(Review review) {
+        reviewDbStorage.updateReview(review);
+    }
+
+    @Override
+    public void deleteReview(int id) {
+        reviewDbStorage.deleteReview(id);
+    }
+
+    @Override
+    public void addReviewLike(int reviewId, int userid, int useful) {
+        reviewDbStorage.addReviewLike(reviewId, userid, useful);
+    }
+
+    @Override
+    public boolean containsReviewLike(int reviewId, int userid) {
+        return reviewDbStorage.containsReviewLike(reviewId, userid);
+    }
+
+    @Override
+    public void deleteReviewLike(int reviewId, int userid) {
+        reviewDbStorage.deleteReviewLike(reviewId, userid);
+    }
+
+    @Override
+    public List<Review> getReviews() {
+        return reviewDbStorage.getReviews();
+    }
+
+    @Override
+    public void updateReviewLike(int reviewId, int userid, int useful) {
+        reviewDbStorage.updateReviewLike(reviewId, userid, useful);
+    }
+
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
