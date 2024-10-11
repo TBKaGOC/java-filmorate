@@ -37,7 +37,7 @@ public interface FilmStorage {
 
     void updateReview(Review review);
 
-    void deleteReview(int id);
+    void deleteReview(int id) throws NotFoundException;
 
     void addReviewLike(int reviewId, int userid, int useful);
 

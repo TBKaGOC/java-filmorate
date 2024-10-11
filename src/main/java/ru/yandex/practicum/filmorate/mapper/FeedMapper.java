@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Feed;
 public class FeedMapper {
     public FeedDto mapToFeedDto(Feed feed) {
         return FeedDto.builder()
+                .eventId(feed.getEventId())
                 .entityId(feed.getEntityId())
                 .timestamp(feed.getTimestamp())
                 .userId(feed.getUserId())
@@ -21,6 +22,7 @@ public class FeedMapper {
 
     public Feed mapToFeed(FeedDto feed) {
         return Feed.builder()
+                .eventId(feed.getEventId())
                 .entityId(feed.getEntityId())
                 .timestamp(feed.getTimestamp())
                 .userId(feed.getUserId())

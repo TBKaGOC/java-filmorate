@@ -22,8 +22,7 @@ public class FeedDbStorage extends BaseDbStorage<Feed> {
             "SELECT * " +
             "FROM events " +
             "WHERE user_id = ? " +
-            "ORDER BY timestamp DESC " +
-            "LIMIT ?";
+            "ORDER BY timestamp";
     private static final String ADD_QUERY =
             "INSERT INTO events(timestamp, user_id, eventType, operation, entity_id) " +
             "VALUES (?, ?, ?, ?, ?)";
@@ -35,22 +34,26 @@ public class FeedDbStorage extends BaseDbStorage<Feed> {
             "WHERE user_id = ?";
     private static final String DELETE_BY_ENTITYID =
             "DELETE events " +
-            "WHERE entity_id = ?";
+            "WHERE user_id = ? and entity_id = ?";
 
     public FeedDbStorage(JdbcTemplate jdbc, FeedRowMapper mapper) {
         super(jdbc, mapper);
     }
 
     public Collection<Feed> getFeedByUserId(int userId, int limit) {
-        return findMany(FIND_BY_USERID_QUERY, userId, limit);
+        return findMany(FIND_BY_USERID_QUERY, userId);
     }
 
     public void deleteFeedByUserId(int userId) {
         update(DELETE_BY_USERID, userId);
+
+        log.trace(String.format("deleted events for userId=%d", userId));
     }
 
-    public void deleteFeedByEntityId(int entityId) {
+    public void deleteFeedByEntityId(int userId, int entityId) {
         update(DELETE_BY_ENTITYID, entityId);
+
+        log.trace(String.format("deleted events for userId=%d, entityId=%d", userId, entityId));
     }
 
     public void addFeed(Feed feed) {
@@ -60,5 +63,7 @@ public class FeedDbStorage extends BaseDbStorage<Feed> {
                 feed.getEventType(),
                 feed.getOperation(),
                 feed.getEntityId());
+
+        log.trace("Add event " + feed);
     }
 }

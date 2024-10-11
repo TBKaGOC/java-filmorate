@@ -211,7 +211,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public int addReview(Review review) {
-        return reviewDbStorage.addReview(review);
+        var result = reviewDbStorage.addReview(review);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.ADD.name())
+                .entityId(result)
+                .build());
+
+        return result;
     }
 
     @Override
@@ -222,11 +232,29 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void updateReview(Review review) {
         reviewDbStorage.updateReview(review);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.UPDATE.name())
+                .entityId(review.getReviewId())
+                .build());
     }
 
     @Override
-    public void deleteReview(int id) {
+    public void deleteReview(int id) throws NotFoundException {
+        var review = reviewDbStorage.getReview(id);
+
         reviewDbStorage.deleteReview(id);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.REMOVE.name())
+                .entityId(id)
+                .build());
     }
 
     @Override
