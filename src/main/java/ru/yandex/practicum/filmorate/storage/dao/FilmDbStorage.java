@@ -2,11 +2,14 @@ package ru.yandex.practicum.filmorate.storage.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.SQLWarningException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -56,37 +59,42 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "ORDER BY EXTRACT(YEAR FROM f.releaseDate)";
+            "ORDER BY EXTRACT(YEAR FROM f.release_date)";
 
     private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
-            "f.releaseDate, f.duration, f.rating_id " +
+            "f.release_date, f.duration, f.rating_id " +
             "FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
-            "LEFT JOIN likes AS l ON l.film_id = f.id " +
+            "LEFT JOIN liked_user AS l ON l.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.rating_id " +
+            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
             "ORDER BY COUNT(l.user_id) DESC";
 
     private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? ";
 
-    private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM likes WHERE film_id = ?";
+    private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM liked_user WHERE film_id = ?";
+
+    private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO films_directors(film_id, director_id)" +
+            "VALUES (?, ?)";
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
     private final ReviewDbStorage reviewDbStorage;
+    private final DirectorDbStorage directorDbStorage;
 
 
     public FilmDbStorage(JdbcTemplate jdbc,
                          RowMapper<Film> mapper,
                          RatingDbStorage ratingStorage,
                          GenreDbStorage genreStorage,
-                         ReviewDbStorage reviewDbStorage) {
+                         ReviewDbStorage reviewDbStorage, DirectorDbStorage directorDbStorage) {
         super(jdbc, mapper);
         this.ratingStorage = ratingStorage;
         this.genreStorage = genreStorage;
         this.reviewDbStorage = reviewDbStorage;
+        this.directorDbStorage = directorDbStorage;
     }
 
     @Override
@@ -172,7 +180,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
-                film.getName(),
+                film.getRating().getId(),
                 film.getId());
     }
 
@@ -272,6 +280,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 (rs, rowNum) -> rs.getInt("user_id"), filmId));
     }
 
+    @Override
+    public void addDirectorId(int filmId, int directorId) throws DuplicatedDataException {
+        try {
+            update(INSERT_FILM_DIRECTOR_QUERY, filmId, directorId);
+        } catch (SQLWarningException e) {
+            throw new DuplicatedDataException(String.format("Для фильма %s режиссер %s уже установлен. %s",
+                    filmId, directorId, e.getSQLWarning()));
+        }
+    }
+
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
                 Integer.class, id);
@@ -283,7 +301,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         for (Integer genre : genres) {
             resultGenres.add(genreStorage.getGenre(genre));
         }
+        List<Integer> directorsIds = jdbc.queryForList(
+                "SELECT director_id FROM films_directors WHERE film_id = ?",
+                Integer.class, id);
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Integer directorId : directorsIds) {
+            directors.add(directorDbStorage.findDirector(directorId));
+        }
         result.setGenres(resultGenres);
         result.setLikedUsers(Set.copyOf(likes));
+        result.setDirectors(directors);
     }
 }

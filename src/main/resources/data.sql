@@ -62,3 +62,16 @@ INSERT INTO friends (sender, recipient, confirmed)
 VALUES (1, 2, TRUE), (1, 3, TRUE),
     (2, 1, FALSE), (2, 3, TRUE),
     (3, 1, FALSE), (3, 2, TRUE);
+
+INSERT INTO directors (NAME)
+VALUES ('Джордж Лукас'),
+       ('Фрэнк Дарабонт'),
+       ('Рассел Малкэй'),
+       ('Пьер Коффан'),
+       ('Крис Рено');
+
+INSERT INTO films_directors (FILM_ID, DIRECTOR_ID)
+VALUES (1, 1), (1, 3),
+       (2, 1),
+       (3, 2),
+       (4, 4), (4, 5);

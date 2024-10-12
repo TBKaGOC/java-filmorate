@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -236,6 +237,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public LinkedHashSet<Integer> getLikes(int filmId) {
         return null;
+    }
+
+    @Override
+    public void addDirectorId(int filmId, int directorId) throws DuplicatedDataException {
+
     }
 
     private <T> int getNextId(Map<Integer, T> map) {

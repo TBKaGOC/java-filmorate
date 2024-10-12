@@ -53,8 +53,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
     }
 
     public Director update(Director newDirector) {
-        update(UPDATE, "Не удалось обновить данные о режиссере",
-                newDirector.getName(), newDirector.getId());
+        update(UPDATE, newDirector.getName(), newDirector.getId());
         return newDirector;
     }
 

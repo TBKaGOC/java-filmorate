@@ -3,8 +3,10 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -41,6 +43,9 @@ public class FilmService {
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
+        if (!CollectionUtils.isEmpty(film.getDirectors())) {
+            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+        }
         int id = storage.addFilm(mapper.mapToFilm(film));
         log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
@@ -65,14 +70,30 @@ public class FilmService {
             if (film.getDuration() != null) {
                 oldFilm.setDuration(film.getDuration());
             }
-
+            if (!CollectionUtils.isEmpty(film.getDirectors())) {
+                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+            }
+            storage.updateFilm(oldFilm);
             log.info("Успешно обновлён фильм {}", film.getId());
-
             return mapper.mapToFilmDto(oldFilm);
         } else {
             log.warn("Не удалось обновить фильм {}", film.getId());
             throw new NotFoundException("Фильм " + film.getId() + " не найден");
         }
+    }
+
+    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, LinkedHashSet<Director> inputDirectors)
+            throws NotFoundException {
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Director director : inputDirectors) {
+            Director directorStorageDirector = directorStorage.findDirector(director);
+            try {
+                storage.addDirectorId(filmId, director.getId());
+                directors.add(directorStorageDirector);
+            } catch (DuplicatedDataException ignored) {
+            }
+        }
+        return directors;
     }
 
     public void addLike(int likedUser, int film) throws NotFoundException {

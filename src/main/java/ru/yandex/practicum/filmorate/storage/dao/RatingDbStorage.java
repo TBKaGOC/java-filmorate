@@ -15,7 +15,7 @@ public class RatingDbStorage extends BaseDbStorage<Rating> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM rating";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM rating WHERE rating_id = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT rating_id FROM rating WHERE rating_id = ?) AS b";
-    private static final String FIND_RATING_ID_QUERY="SELECT rating_id FROM films AS f WHERE id = ?";
+    private static final String FIND_RATING_ID_QUERY = "SELECT rating_id FROM films AS f WHERE id = ?";
 
     public RatingDbStorage(JdbcTemplate jdbc, RowMapper<Rating> mapper) {
         super(jdbc, mapper);

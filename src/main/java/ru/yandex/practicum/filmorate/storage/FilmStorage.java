@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -57,5 +58,7 @@ public interface FilmStorage {
     List<Film> findDirectorFilms(int directorId);
 
     LinkedHashSet<Integer> getLikes(int filmId);
+
+    void addDirectorId(int filmId, int directorId) throws DuplicatedDataException;
 
 }
