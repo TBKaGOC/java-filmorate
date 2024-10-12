@@ -22,7 +22,8 @@ public class FilmServiceTests {
     @BeforeEach
     public void createNewService() {
         storage = new InMemoryUserStorage();
-        service = new FilmService(new InMemoryFilmStorage(), storage, new FilmMapper());
+        service = new FilmService(new InMemoryFilmStorage(), storage, new FilmMapper(),
+                null,null,null);
     }
 
     @Test

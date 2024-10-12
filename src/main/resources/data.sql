@@ -2,6 +2,8 @@ SET REFERENTIAL_INTEGRITY FALSE;
 
 TRUNCATE TABLE film_genre;
 
+TRUNCATE TABLE films_directors;
+
 TRUNCATE TABLE friends;
 
 TRUNCATE TABLE liked_user;
@@ -13,6 +15,8 @@ TRUNCATE TABLE users RESTART IDENTITY;
 TRUNCATE TABLE genre RESTART IDENTITY;
 
 TRUNCATE TABLE rating RESTART IDENTITY;
+
+TRUNCATE TABLE directors RESTART IDENTITY;
 
 SET REFERENTIAL_INTEGRITY TRUE;
 
@@ -58,3 +62,16 @@ INSERT INTO friends (sender, recipient, confirmed)
 VALUES (1, 2, TRUE), (1, 3, TRUE),
     (2, 1, FALSE), (2, 3, TRUE),
     (3, 1, FALSE), (3, 2, TRUE);
+
+INSERT INTO directors (NAME)
+VALUES ('Джордж Лукас'),
+       ('Фрэнк Дарабонт'),
+       ('Рассел Малкэй'),
+       ('Пьер Коффан'),
+       ('Крис Рено');
+
+INSERT INTO films_directors (FILM_ID, DIRECTOR_ID)
+VALUES (1, 1), (1, 3),
+       (2, 1),
+       (3, 2),
+       (4, 4), (4, 5);

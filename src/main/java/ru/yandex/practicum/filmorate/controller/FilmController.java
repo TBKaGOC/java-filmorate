@@ -23,7 +23,8 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public FilmDto getFilm(@PathVariable int id) throws NotFoundException {
-        return service.getFilm(id);
+        FilmDto filmDto = service.getFilm(id);
+        return filmDto;
     }
 
     @GetMapping("/popular")
@@ -34,7 +35,8 @@ public class FilmController {
     @PostMapping
     public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException {
         service.addFilm(film);
-        return service.getFilm(film.getId());
+        FilmDto filmDto = service.getFilm(film.getId());
+        return filmDto;
     }
 
     @PutMapping
@@ -56,5 +58,12 @@ public class FilmController {
     @DeleteMapping("/{film_id}/like/{id}")
     public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> findDirectorFilms(@PathVariable("directorId") int directorId,
+                                                 @RequestParam(name = "sortBy", defaultValue = "")
+                                                 String sortConditions) throws NotFoundException {
+        return service.findDirectorFilms(directorId, sortConditions);
     }
 }
