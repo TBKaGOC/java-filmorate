@@ -53,7 +53,7 @@ public class FilmDbStorageTests {
         List<Film> films = storage.getMostPopular(2, 6, null);
 
         Assertions.assertNotNull(films);
-        Assertions.assertEquals(films, List.of( storage.getFilm(2),
+        Assertions.assertEquals(films, List.of(storage.getFilm(2),
                 storage.getFilm(4)));
     }
 
