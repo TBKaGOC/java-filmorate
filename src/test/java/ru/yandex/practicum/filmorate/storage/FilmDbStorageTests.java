@@ -59,10 +59,10 @@ public class FilmDbStorageTests {
 
     @Test
     public void testGetMostPopularWithYear() throws NotFoundException {
-        List<Film> films = storage.getMostPopular(2, null, 1997);
+        List<Film> films = storage.getMostPopular(2, null, 2010);
 
         Assertions.assertNotNull(films);
-        Assertions.assertEquals(films, List.of(storage.getFilm(2)));
+        Assertions.assertEquals(films, List.of(storage.getFilm(4)));
     }
 
     @Test
