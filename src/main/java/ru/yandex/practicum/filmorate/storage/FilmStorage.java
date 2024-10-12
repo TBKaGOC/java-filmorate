@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public interface FilmStorage {
@@ -48,4 +49,13 @@ public interface FilmStorage {
     List<Review> getReviews();
 
     void updateReviewLike(int reviewId, int userid, int useful);
+
+    List<Film> findDirectorFilmsOrderYear(int directorId);
+
+    List<Film> findDirectorFilmsOrderLikes(int directorId);
+
+    List<Film> findDirectorFilms(int directorId);
+
+    LinkedHashSet<Integer> getLikes(int filmId);
+
 }

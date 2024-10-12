@@ -21,37 +21,57 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     //Не проходило по длине checkStyle
     private static final String FIND_ALL =
             "SELECT * " +
-            "FROM films";
+                    "FROM films";
     private static final String FIND_BY_ID_QUERY =
             "SELECT * " +
-            "FROM films " +
-            "WHERE id = ?";
+                    "FROM films " +
+                    "WHERE id = ?";
     private static final String FIND_MOST_POPULAR_QUERY =
             "SELECT id, name, description, release_date, duration, rating_id " +
-            "FROM films AS f " +
-            "    LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id " +
-            "GROUP BY f.id " +
-            "ORDER BY COUNT(l.user_id) " +
-            "DESC LIMIT ?";
+                    "FROM films AS f " +
+                    "    LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id " +
+                    "GROUP BY f.id " +
+                    "ORDER BY COUNT(l.user_id) " +
+                    "DESC LIMIT ?";
     private static final String ADD_QUERY =
             "INSERT INTO films (name, description, release_date, duration, rating_id) " +
-            "VALUES (?, ?, ?, ?, ?)";
+                    "VALUES (?, ?, ?, ?, ?)";
     private static final String ADD_GENRE_QUERY =
             "INSERT INTO film_genre (film_id, genre_id) " +
-            "VALUES (?, ?)";
+                    "VALUES (?, ?)";
     private static final String ADD_LIKE_QUERY =
             "INSERT INTO liked_user (film_id, user_id) " +
-            "VALUES (?, ?)";
+                    "VALUES (?, ?)";
     private static final String UPDATE_FILM_QUERY =
             "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
-            "WHERE id = ?";
+                    "WHERE id = ?";
     private static final String DELETE_QUERY =
             "DELETE FROM films WHERE id = ?";
     private static final String DELETE_LIKE_QUERY =
             "DELETE FROM liked_user " +
-            "WHERE film_id = ? AND user_id = ?";
+                    "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
+
+    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "WHERE fd.director_id = ? " +
+            "ORDER BY EXTRACT(YEAR FROM f.releaseDate)";
+
+    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
+            "f.releaseDate, f.duration, f.rating_id " +
+            "FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "LEFT JOIN likes AS l ON l.film_id = f.id " +
+            "WHERE fd.director_id = ? " +
+            "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.rating_id " +
+            "ORDER BY COUNT(l.user_id) DESC";
+
+    private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "WHERE fd.director_id = ? ";
+
+    private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM likes WHERE film_id = ?";
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
@@ -92,7 +112,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw e;
         }
     }
-
 
 
     @Override
@@ -232,6 +251,26 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         reviewDbStorage.updateReviewLike(reviewId, userid, useful);
     }
 
+    @Override
+    public List<Film> findDirectorFilmsOrderYear(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY, directorId);
+    }
+
+    @Override
+    public List<Film> findDirectorFilmsOrderLikes(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY, directorId);
+    }
+
+    @Override
+    public List<Film> findDirectorFilms(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_QUERY, directorId);
+    }
+
+    @Override
+    public LinkedHashSet<Integer> getLikes(int filmId) {
+        return new LinkedHashSet<>(jdbc.query(FIND_LIKES_BY_ID_QUERY,
+                (rs, rowNum) -> rs.getInt("user_id"), filmId));
+    }
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
@@ -241,7 +280,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 Integer.class, id);
         Set<Genre> resultGenres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
 
-        for (Integer genre: genres) {
+        for (Integer genre : genres) {
             resultGenres.add(genreStorage.getGenre(genre));
         }
         result.setGenres(resultGenres);

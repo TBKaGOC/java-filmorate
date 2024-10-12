@@ -218,6 +218,26 @@ public class InMemoryFilmStorage implements FilmStorage {
                         .build());
     }
 
+    @Override
+    public List<Film> findDirectorFilmsOrderYear(int directorId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> findDirectorFilmsOrderLikes(int directorId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> findDirectorFilms(int directorId) {
+        return null;
+    }
+
+    @Override
+    public LinkedHashSet<Integer> getLikes(int filmId) {
+        return null;
+    }
+
     private <T> int getNextId(Map<Integer, T> map) {
         int currentMaxId = map.keySet()
                 .stream()

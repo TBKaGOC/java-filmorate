@@ -7,9 +7,15 @@ import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.dao.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.GenreDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.RatingDbStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,6 +27,9 @@ public class FilmService {
     private final FilmStorage storage;
     private final UserStorage userStorage;
     private final FilmMapper mapper;
+    private final DirectorDbStorage directorStorage;
+    private final RatingDbStorage ratingStorage;
+    private final GenreDbStorage genreStorage;
 
     public Collection<FilmDto> getFilms() throws NotFoundException {
         return storage.getFilms().stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
@@ -86,5 +95,61 @@ public class FilmService {
 
     public List<FilmDto> getMostPopular(String count) {
         return storage.getMostPopular(count).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+
+    public Collection<FilmDto> findDirectorFilms(int directorId, String sortConditions) throws NotFoundException {
+        Director director = directorStorage.findDirector(directorId);
+        String message = String.format("Получаем список фильмов режиссера %s", director.getName());
+
+        Collection<Film> films;
+        if (sortConditions.equals("year")) {
+            log.debug(message + " по году выпуска");
+            films = storage.findDirectorFilmsOrderYear(directorId);
+        } else if (sortConditions.equals("likes")) {
+            log.debug(message + " по количеству лайков");
+            films = storage.findDirectorFilmsOrderLikes(directorId);
+        } else {
+            log.debug("Условия сортировки не заданы. " + message);
+            films = storage.findDirectorFilms(directorId);
+        }
+
+        List<FilmDto> collect = new ArrayList<>();
+        for (Film film : films) {
+            FilmDto filmDto = fillFilmData(film);
+            collect.add(filmDto);
+        }
+        return collect;
+    }
+
+    private FilmDto fillFilmData(Film film) throws NotFoundException {
+        log.debug(String.format("Ищем жанры фильма %s", film.getName()));
+        LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+        for (Integer i : genreStorage.findGenresIdsByFilmId(film.getId())) {
+            try {
+                Genre genre = genreStorage.getGenre(i);
+                genres.add(genre);
+            } catch (NotFoundException ignored) {
+            }
+        }
+        log.debug(String.format("Ищем режиссеров фильма %s", film.getName()));
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Integer i : directorStorage.findDirectorsIdsByFilmId(film.getId())) {
+            try {
+                Director director = directorStorage.findDirector(i);
+                directors.add(director);
+            } catch (NotFoundException ignored) {
+            }
+        }
+        log.debug(String.format("Ищем лайки фильма %s", film.getName()));
+        LinkedHashSet<Integer> likes = storage.getLikes(film.getId());
+        log.debug(String.format("Ищем рейтинг фильма %s", film.getName()));
+        Rating mpa = ratingStorage.getRating(ratingStorage.findRatingIdByFilmId(film.getId()));
+        log.debug(String.format("Фильм %s найден!", film.getName()));
+        film.setRating(mpa);
+        film.setGenres(genres);
+        film.setLikedUsers(likes);
+        film.setDirectors(directors);
+        return mapper.mapToFilmDto(film);
     }
 }

@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Data
@@ -23,7 +24,7 @@ public class Film {
     private Rating rating;
     private Set<Genre> genres;
     public static final LocalDate EARLY_DATE = LocalDate.of(1895, Month.DECEMBER, 28);
-
+    private LinkedHashSet<Director> directors;
     public void addLike(Integer id) {
         if (likedUsers == null) {
             likedUsers = new HashSet<>();

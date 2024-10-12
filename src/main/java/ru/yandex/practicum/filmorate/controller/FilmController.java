@@ -52,4 +52,11 @@ public class FilmController {
     public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
     }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> findDirectorFilms(@PathVariable("directorId") int directorId,
+                                                 @RequestParam(name = "sortBy", defaultValue = "")
+                                                 String sortConditions) throws NotFoundException {
+        return service.findDirectorFilms(directorId, sortConditions);
+    }
 }
