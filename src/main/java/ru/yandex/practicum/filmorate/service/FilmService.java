@@ -84,7 +84,7 @@ public class FilmService {
         log.info("Лайк пользоватля {} успешно удалён у фильма {}", unlikedUser, film);
     }
 
-    public List<FilmDto> getMostPopular(String count) {
-        return storage.getMostPopular(count).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
+    public List<FilmDto> getMostPopular(int count, Integer genreId, Integer year) {
+        return storage.getMostPopular(count, genreId, year).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
     }
 }

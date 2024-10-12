@@ -12,7 +12,7 @@ public interface FilmStorage {
 
     Film getFilm(Integer id) throws NotFoundException;
 
-    List<Film> getMostPopular(String count);
+    List<Film> getMostPopular(int count, Integer genreId, Integer year);
 
     Integer addFilm(Film film) throws CorruptedDataException, NotFoundException;
 
