@@ -35,9 +35,11 @@ CREATE TABLE IF NOT EXISTS genre (
 );
 
 CREATE TABLE IF NOT EXISTS friends (
-    sender INTEGER REFERENCES users (id),
-    recipient INTEGER REFERENCES users (id),
+    sender int,
+    recipient int,
     confirmed BOOL,
+    foreign key (sender) references users (id) on delete cascade,
+    foreign key (recipient) references users (id) on delete cascade,
     PRIMARY KEY(sender, recipient)
 );
 

@@ -22,7 +22,7 @@ import java.util.Set;
 public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
-    private static final String FIND_FRIENDS_QUERY = "SELECT * FROM users WHERE id IN (SELECT sender AS id FROM friends WHERE recipient = ? UNION SELECT recipient AS id FROM friends WHERE sender = ? AND confirmed = TRUE)";
+    private static final String FIND_FRIENDS_QUERY = "SELECT * FROM users WHERE id IN (SELECT sender AS id FROM friends WHERE recipient = ? AND confirmed = TRUE UNION SELECT recipient AS id FROM friends WHERE sender = ? AND confirmed = TRUE)";
     private static final String FIND_MUTUAL_FRIEND_QUERY = "SELECT * FROM users WHERE id IN (SELECT recipient AS id FROM friends WHERE sender = ? AND recipient IN (SELECT recipient AS id FROM friends WHERE sender = ? UNION SELECT sender AS id FROM friends WHERE recipient = ?) UNION SELECT sender AS id FROM friends WHERE recipient = ? AND sender IN (SELECT recipient AS id FROM friends WHERE sender = ? UNION SELECT sender AS id FROM friends WHERE recipient = ?))";
     private static final String ADD_QUERY = "INSERT INTO users (email, login, name, birthday) " +
             "VALUES (?, ?, ?, ?)";
@@ -93,7 +93,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         for (Integer friendId: user.getFriends()) {
             User friend = getUser(friendId);
 
-            if (friend.getFriends().contains(id)) {
+            if (friend.getFriends().contains(id) && friend.isFriendConfirm(id)) {
                 update(UPDATE_FRIENDS_STATUS, true, id, friendId, friendId, id);
             } else {
                 update(ADD_FRIEND_QUERY, id, friendId, user.isFriendConfirm(friendId));
@@ -104,12 +104,16 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void addFriend(User recipient, User sender, Boolean confirmed) {
+        if (recipient == null || sender == null) {
+            throw new NotFoundException("Пользователь не найден.");
+        }
         int id = sender.getId();
         int friendId = recipient.getId();
+
         if (confirmed) {
-            update(UPDATE_FRIENDS_STATUS, true, id, friendId, friendId, id);
+            jdbc.update(UPDATE_FRIENDS_STATUS, true, id, friendId, friendId, id);
         } else {
-            update(ADD_FRIEND_QUERY, id, friendId, false);
+            jdbc.update(ADD_FRIEND_QUERY, id, friendId, true);
         }
 
         feedDbStorage.addFeed(Feed.builder()
@@ -136,7 +140,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void deleteFriend(Integer recipient, Integer sender) throws NotFoundException {
-        if (getFriends(recipient).contains(getUser(sender)) || getFriends(sender).contains(getUser(recipient))) {
+        if (getFriends(recipient).contains(getUser(sender)) && getFriends(sender).contains(getUser(recipient))) {
             update(DELETE_FRIEND_QUERY, recipient, sender, recipient, sender, true);
 
             feedDbStorage.addFeed(Feed.builder()

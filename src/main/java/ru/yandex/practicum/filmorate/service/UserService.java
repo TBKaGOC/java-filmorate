@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,7 +55,7 @@ public class UserService {
         user.setId(id);
     }
 
-    public Collection<UserDto> addFriend(Integer sender, Integer recipient) throws NotFoundException {
+    public void addFriend(Integer sender, Integer recipient) throws NotFoundException {
         if (!storage.contains(sender)) {
             log.warn("Не удалось отправить заявку пользователя {}", sender);
             throw new NotFoundException("Пользователь " + sender + " не найден");
@@ -72,14 +71,18 @@ public class UserService {
             recipientUser.addFriend(senderUser, true);
             senderUser.addFriend(recipientUser, true);
             storage.addFriend(recipientUser, senderUser, true);
+            storage.addFriend(senderUser, recipientUser, true);
         } else {
             senderUser.addFriend(recipientUser, false);
+            recipientUser.addFriend(senderUser, false);
             storage.addFriend(recipientUser, senderUser, false);
+            storage.addFriend(senderUser, recipientUser, false);
         }
 
         log.info("Друзьями успешно стали быть пользователи {} и {}", sender, recipient);
 
-        return List.of(mapper.mapToUserDto(senderUser), mapper.mapToUserDto(recipientUser));
+        mapper.mapToUserDto(senderUser);
+        mapper.mapToUserDto(recipientUser);
     }
 
     public UserDto updateUser(UserDto user) throws NotFoundException, DuplicatedDataException {
@@ -144,6 +147,7 @@ public class UserService {
         user1.deleteFriend(user2);
         user2.deleteFriend(user1);
         storage.deleteFriend(recipient, sender);
+        storage.deleteFriend(sender, recipient);
         log.info("Друзьями успешно перестали быть пользователи {} и {}", sender, recipient);
     }
 

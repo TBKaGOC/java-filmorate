@@ -57,9 +57,9 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public Collection<UserDto> addFriend(@PathVariable int id, @PathVariable int friendId) throws NotFoundException,
+    public void addFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) throws NotFoundException,
             DuplicatedDataException {
-        return service.addFriend(id, friendId);
+        service.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
