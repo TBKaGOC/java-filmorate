@@ -81,6 +81,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
+    private static final String FIND_COMMONFILMS =
+            "SELECT id, name, description, release_date, duration, rating_id " +
+            "FROM( " +
+            "     SELECT film_id " +
+            "     FROM liked_user " +
+            "     WHERE user_id = ? " +
+            "     INTERSECT " +
+            "     SELECT film_id " +
+            "     FROM liked_user " +
+            "     WHERE user_id = ? " +
+            "    ) l " +
+            "   JOIN films f on f.id = l.film_id " +
+            "   JOIN liked_user ls on ls.film_id = f.id " +
+            "GROUP BY id, name, description, release_date, duration, rating_id " +
+            "ORDER BY COUNT(ls.user_id)";
     private final ReviewDbStorage reviewDbStorage;
     private final DirectorDbStorage directorDbStorage;
 
@@ -120,6 +135,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw e;
         }
     }
+
 
 
     @Override
@@ -288,6 +304,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw new DuplicatedDataException(String.format("Для фильма %s режиссер %s уже установлен. %s",
                     filmId, directorId, e.getSQLWarning()));
         }
+    }
+
+    @Override
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return findMany(FIND_COMMONFILMS, userId, friendId)
+                .stream()
+                .peek(i -> {
+                    try {
+                        foldFilm(i.getId(), i);
+                    } catch (NotFoundException ignored) {
+
+                    }
+                })
+                .toList();
     }
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {

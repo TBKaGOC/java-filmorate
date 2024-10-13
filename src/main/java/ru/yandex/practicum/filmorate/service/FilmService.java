@@ -173,4 +173,19 @@ public class FilmService {
         film.setDirectors(directors);
         return mapper.mapToFilmDto(film);
     }
+
+    public Collection<FilmDto> getCommonFilms(int userId, int friendId) {
+        var result = storage.getCommonFilms(userId, friendId)
+                .stream()
+                .map(mapper::mapToFilmDto)
+                .collect(Collectors.toList());
+
+        log.trace(String.format("getCommonFilms: found %d rows ", result.size()));
+
+        for (var film: result) {
+            log.trace("getCommonFilms: found " + film);
+        }
+
+        return result;
+    }
 }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 @Data
 @Builder
+@ToString
 public class FilmDto {
     Integer id;
     @NotBlank String name;
