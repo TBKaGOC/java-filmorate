@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryFilmStorage;
 
 import java.time.LocalDate;
@@ -65,7 +66,46 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetMostPopularFilms() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetMostPopularFilmsWithGenre() throws NotFoundException, CorruptedDataException {
+        Set<Genre> genres = new HashSet<>();
+        Genre genre = Genre
+                .builder()
+                .id(1)
+                .name("Комедия")
+                .build();
+        genres.add(genre);
+
+        for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .genres(genres)
+                    .likedUsers(likedUser)
+                    .build();
+            filmStorage.addFilm(film);
+        }
+
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
+
+        Assertions.assertEquals(filmStorage.getMostPopular(5, genre.getId(), null), films);
+    }
+
+    @Test
+    public void shouldWeGetMostPopularFilmsWithYear() throws NotFoundException, CorruptedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -91,7 +131,47 @@ public class FilmStorageTests {
                 filmStorage.getFilm(1)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("5"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(5, null, LocalDate.now().getYear()), films);
+    }
+
+    @Test
+    public void shouldWeGetMostPopularFilmsWithGenreAndYear() throws NotFoundException, CorruptedDataException {
+        Set<Genre> genres = new HashSet<>();
+
+        Genre genre = Genre
+                .builder()
+                .id(1)
+                .name("Комедия")
+                .build();
+        genres.add(genre);
+
+        for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .genres(genres)
+                    .likedUsers(likedUser)
+                    .build();
+            filmStorage.addFilm(film);
+        }
+
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
+
+        Assertions.assertEquals(filmStorage.getMostPopular(5, genre.getId(), LocalDate.now().getYear()), films);
     }
 
     @Test
@@ -122,7 +202,7 @@ public class FilmStorageTests {
                 filmStorage.getFilm(1)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("10"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(10, null, null), films);
     }
 
     @Test
@@ -151,6 +231,6 @@ public class FilmStorageTests {
                 filmStorage.getFilm(3)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("3"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(3, null, null), films);
     }
 }

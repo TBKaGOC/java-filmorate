@@ -139,8 +139,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
 
     @Override
-    public List<Film> getMostPopular(String count) {
-        return findMany(FIND_MOST_POPULAR_QUERY, Integer.parseInt(count));
+    public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
+        if (genreId != null && year != null) {
+            return findAllByGenreAndYear(genreId, year).stream().limit(count).toList();
+        } else if (genreId != null) {
+            return findAllByGenre(genreId).stream().limit(count).toList();
+        } else if (year != null) {
+            return findAllByYear(year).stream().limit(count).toList();
+        }
+        return findMany(FIND_MOST_POPULAR_QUERY, count);
     }
 
     @Override
@@ -341,5 +348,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         result.setGenres(resultGenres);
         result.setLikedUsers(Set.copyOf(likes));
         result.setDirectors(directors);
+    }
+
+    private List<Film> findAllByGenre(int genreId) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId);
+    }
+
+    private List<Film> findAllByYear(int year) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", year);
+    }
+
+    private List<Film> findAllByGenreAndYear(int genreId, int year) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year);
+
     }
 }

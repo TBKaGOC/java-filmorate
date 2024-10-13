@@ -41,11 +41,36 @@ public class FilmDbStorageTests {
 
     @Test
     public void testGetMostPopular() throws NotFoundException {
-        List<Film> films = storage.getMostPopular("2");
+        List<Film> films = storage.getMostPopular(2, null, null);
 
         Assertions.assertNotNull(films);
         Assertions.assertEquals(films, List.of(storage.getFilm(2),
                 storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithGenre() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(2, 6, null);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(2),
+                storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithYear() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(2, null, 2010);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithGenreAndYear() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(1, 6, 1997);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(2)));
     }
 
     @Test

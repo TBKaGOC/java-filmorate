@@ -36,17 +36,26 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostPopular(String count) {
-        int sizeOfTop =  Integer.parseInt(count);
-
-        List<Film> resultList = films.values().stream()
-                .sorted(Comparator.comparing(Film::getLikesNumber).reversed())
-                .toList();
-        if (sizeOfTop >= resultList.size()) {
-            return resultList;
-        } else {
-            return resultList.subList(0, sizeOfTop);
+    public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
+        List<Film> resultList = films.values().stream().toList();
+        if (genreId != null && year != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
+                    .filter(film -> film.getReleaseDate().getYear() == year)
+                    .toList();
+        } else if (genreId != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
+                    .toList();
+        } else if (year != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getReleaseDate().getYear() == year)
+                    .toList();
         }
+        return resultList.stream()
+                .sorted(Comparator.comparing(Film::getLikesNumber).reversed())
+                .limit(count)
+                .toList();
     }
 
     @Override
