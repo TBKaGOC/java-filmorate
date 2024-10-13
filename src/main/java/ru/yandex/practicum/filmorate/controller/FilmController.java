@@ -50,8 +50,27 @@ public class FilmController {
         return service.getFilm(filmId);
     }
 
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable int filmId) {
+        service.deleteFilm(filmId);
+    }
+
     @DeleteMapping("/{film_id}/like/{id}")
     public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
+    }
+
+    @GetMapping("/common")
+    public Collection<FilmDto> getCommonFilms(
+            @RequestParam int userId,
+            @RequestParam int friendId) {
+        return service.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> findDirectorFilms(@PathVariable("directorId") int directorId,
+                                                 @RequestParam(name = "sortBy", defaultValue = "")
+                                                 String sortConditions) throws NotFoundException {
+        return service.findDirectorFilms(directorId, sortConditions);
     }
 }

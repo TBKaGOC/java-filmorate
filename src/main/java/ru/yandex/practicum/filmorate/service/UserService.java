@@ -120,6 +120,9 @@ public class UserService {
         }
     }
 
+    public void deleteUser(Integer userId) {
+        storage.deleteUser(userId);
+    }
 
     public void deleteFriend(Integer sender, Integer recipient) throws NotFoundException {
         if (!storage.contains(sender)) {

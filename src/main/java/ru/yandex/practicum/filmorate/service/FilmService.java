@@ -3,13 +3,21 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.dao.DirectorDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.GenreDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.RatingDbStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,6 +29,9 @@ public class FilmService {
     private final FilmStorage storage;
     private final UserStorage userStorage;
     private final FilmMapper mapper;
+    private final DirectorDbStorage directorStorage;
+    private final RatingDbStorage ratingStorage;
+    private final GenreDbStorage genreStorage;
 
     public Collection<FilmDto> getFilms() throws NotFoundException {
         return storage.getFilms().stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
@@ -32,8 +43,11 @@ public class FilmService {
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
+        if (!CollectionUtils.isEmpty(film.getDirectors())) {
+            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+        }
         int id = storage.addFilm(mapper.mapToFilm(film));
-        log.info("Успешно добавлен новый фильм {}", film.getId());
+        log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
     }
 
@@ -56,14 +70,30 @@ public class FilmService {
             if (film.getDuration() != null) {
                 oldFilm.setDuration(film.getDuration());
             }
-
+            if (!CollectionUtils.isEmpty(film.getDirectors())) {
+                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+            }
+            storage.updateFilm(oldFilm);
             log.info("Успешно обновлён фильм {}", film.getId());
-
             return mapper.mapToFilmDto(oldFilm);
         } else {
             log.warn("Не удалось обновить фильм {}", film.getId());
             throw new NotFoundException("Фильм " + film.getId() + " не найден");
         }
+    }
+
+    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, LinkedHashSet<Director> inputDirectors)
+            throws NotFoundException {
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Director director : inputDirectors) {
+            Director directorStorageDirector = directorStorage.findDirector(director);
+            try {
+                storage.addDirectorId(filmId, director.getId());
+                directors.add(directorStorageDirector);
+            } catch (DuplicatedDataException ignored) {
+            }
+        }
+        return directors;
     }
 
     public void addLike(int likedUser, int film) throws NotFoundException {
@@ -73,6 +103,10 @@ public class FilmService {
         }
         storage.addLike(likedUser, film);
         log.info("Лайк пользоватля {} успешно добавлен фильму {}", likedUser, film);
+    }
+
+    public void deleteFilm(int id) {
+        storage.deleteFilm(id);
     }
 
     public void deleteLike(int unlikedUser, int film) throws NotFoundException {
@@ -86,5 +120,76 @@ public class FilmService {
 
     public List<FilmDto> getMostPopular(int count, Integer genreId, Integer year) {
         return storage.getMostPopular(count, genreId, year).stream().map(mapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+
+    public Collection<FilmDto> findDirectorFilms(int directorId, String sortConditions) throws NotFoundException {
+        Director director = directorStorage.findDirector(directorId);
+        String message = String.format("Получаем список фильмов режиссера %s", director.getName());
+
+        Collection<Film> films;
+        if (sortConditions.equals("year")) {
+            log.debug(message + " по году выпуска");
+            films = storage.findDirectorFilmsOrderYear(directorId);
+        } else if (sortConditions.equals("likes")) {
+            log.debug(message + " по количеству лайков");
+            films = storage.findDirectorFilmsOrderLikes(directorId);
+        } else {
+            log.debug("Условия сортировки не заданы. " + message);
+            films = storage.findDirectorFilms(directorId);
+        }
+
+        List<FilmDto> collect = new ArrayList<>();
+        for (Film film : films) {
+            FilmDto filmDto = fillFilmData(film);
+            collect.add(filmDto);
+        }
+        return collect;
+    }
+
+    private FilmDto fillFilmData(Film film) throws NotFoundException {
+        log.debug(String.format("Ищем жанры фильма %s", film.getName()));
+        LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+        for (Integer i : genreStorage.findGenresIdsByFilmId(film.getId())) {
+            try {
+                Genre genre = genreStorage.getGenre(i);
+                genres.add(genre);
+            } catch (NotFoundException ignored) {
+            }
+        }
+        log.debug(String.format("Ищем режиссеров фильма %s", film.getName()));
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Integer i : directorStorage.findDirectorsIdsByFilmId(film.getId())) {
+            try {
+                Director director = directorStorage.findDirector(i);
+                directors.add(director);
+            } catch (NotFoundException ignored) {
+            }
+        }
+        log.debug(String.format("Ищем лайки фильма %s", film.getName()));
+        LinkedHashSet<Integer> likes = storage.getLikes(film.getId());
+        log.debug(String.format("Ищем рейтинг фильма %s", film.getName()));
+        Rating mpa = ratingStorage.getRating(ratingStorage.findRatingIdByFilmId(film.getId()));
+        log.debug(String.format("Фильм %s найден!", film.getName()));
+        film.setRating(mpa);
+        film.setGenres(genres);
+        film.setLikedUsers(likes);
+        film.setDirectors(directors);
+        return mapper.mapToFilmDto(film);
+    }
+
+    public Collection<FilmDto> getCommonFilms(int userId, int friendId) {
+        var result = storage.getCommonFilms(userId, friendId)
+                .stream()
+                .map(mapper::mapToFilmDto)
+                .collect(Collectors.toList());
+
+        log.trace(String.format("getCommonFilms: found %d rows ", result.size()));
+
+        for (var film: result) {
+            log.trace("getCommonFilms: found " + film);
+        }
+
+        return result;
     }
 }
