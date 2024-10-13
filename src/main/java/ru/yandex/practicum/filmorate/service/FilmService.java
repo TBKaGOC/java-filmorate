@@ -105,6 +105,10 @@ public class FilmService {
         log.info("Лайк пользоватля {} успешно добавлен фильму {}", likedUser, film);
     }
 
+    public void deleteFilm(int id) {
+        storage.deleteFilm(id);
+    }
+
     public void deleteLike(int unlikedUser, int film) throws NotFoundException {
         if (!userStorage.contains(unlikedUser)) {
             log.warn("Не удалось удалить лайк у фильма {}", film);

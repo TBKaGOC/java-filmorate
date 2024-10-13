@@ -54,6 +54,11 @@ public class UserController {
         return service.addFriend(id, friendId);
     }
 
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable int userId) {
+        service.deleteUser(userId);
+    }
+
     @DeleteMapping("/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable int id, @PathVariable int friendId) throws NotFoundException {
         service.deleteFriend(id, friendId);

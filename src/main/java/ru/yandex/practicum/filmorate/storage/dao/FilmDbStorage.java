@@ -55,12 +55,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
-
     private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? " +
             "ORDER BY EXTRACT(YEAR FROM f.release_date)";
-
     private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
             "f.release_date, f.duration, f.rating_id " +
             "FROM films_directors AS fd " +
@@ -69,15 +67,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE fd.director_id = ? " +
             "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
             "ORDER BY COUNT(l.user_id) DESC";
-
     private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? ";
-
     private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM liked_user WHERE film_id = ?";
-
     private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO films_directors(film_id, director_id)" +
             "VALUES (?, ?)";
+    private static final String DELETE_FROM_GENRE_QUERY = "DELETE FROM film_genre WHERE film_id = ?";
+    private static final String DELETE_FROM_LIKED_USER_QUERY = "DELETE FROM liked_user WHERE film_id = ?";
+    private static final String DELETE_FROM_FILMS_DIRECTORS_QUERY = "DELETE FROM films_directors WHERE film_id = ?";
+    private static final String DELETE_FROM_REVIEWS_QUERY = "DELETE FROM reviews WHERE film_id = ?";
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
@@ -209,6 +208,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public void deleteFilm(Integer id) {
+        delete(DELETE_FROM_REVIEWS_QUERY, id);
+        delete(DELETE_FROM_FILMS_DIRECTORS_QUERY, id);
+        delete(DELETE_FROM_LIKED_USER_QUERY, id);
+        delete(DELETE_FROM_GENRE_QUERY, id);
         delete(DELETE_QUERY, id);
     }
 

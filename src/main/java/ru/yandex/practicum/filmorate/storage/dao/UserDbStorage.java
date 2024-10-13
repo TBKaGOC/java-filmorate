@@ -32,6 +32,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                                                         "WHERE sender = ? AND recipient = ?" +
                                                         "OR sender = ? AND recipient = ?";
     private static final String DELETE_QUERY = "DELETE FROM users WHERE id = ?";
+
+    private static final String DELETE_FROM_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? or sender = ?";
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? AND sender = ?" +
             "OR sender = ? AND recipient = ? AND confirmed = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM users WHERE id = ?) AS b";
@@ -110,6 +112,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void deleteUser(Integer id) {
+        update(DELETE_FROM_FRIEND_QUERY, id, id);
         delete(DELETE_QUERY, id);
     }
 
