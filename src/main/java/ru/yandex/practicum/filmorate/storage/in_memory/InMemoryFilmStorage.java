@@ -253,6 +253,16 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     }
 
+    @Override
+    public Collection<Film> searchByTitle(String query) {
+        return null;
+    }
+
+    @Override
+    public Collection<Film> searchByDirector(String query) {
+        return null;
+    }
+
     private <T> int getNextId(Map<Integer, T> map) {
         int currentMaxId = map.keySet()
                 .stream()

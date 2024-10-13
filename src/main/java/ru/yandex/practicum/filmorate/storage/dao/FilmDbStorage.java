@@ -16,6 +16,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -95,6 +96,23 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "   JOIN liked_user ls on ls.film_id = f.id " +
             "GROUP BY id, name, description, release_date, duration, rating_id " +
             "ORDER BY COUNT(ls.user_id)";
+    private static final String SEARCH_BY_TITLE_QUERY = "SELECT * FROM films WHERE POSITION (?, name) <> 0";
+    private static final String SEARCH_BY_DIRECTOR_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "WHERE f.id IN (" +
+                "SELECT film_id " +
+                "FROM films_directors " +
+                "WHERE director_id IN (" +
+                    "SELECT id " +
+                    "FROM directors " +
+                    "WHERE POSITION (?, name) <> 0" +
+                ")" +
+            ")";
     private final ReviewDbStorage reviewDbStorage;
     private final DirectorDbStorage directorDbStorage;
 
@@ -364,5 +382,40 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private List<Film> findAllByGenreAndYear(int genreId, int year) {
         return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year);
 
+    }
+
+    @Override
+    public Collection<Film> searchByTitle(String query) {
+        return findMany(SEARCH_BY_TITLE_QUERY, query).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<Film> searchByDirector(String query) throws NotFoundException {
+        /*return findMany(SEARCH_BY_DIRECTOR_QUERY, query).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());*/
+        List<Film> result = new ArrayList<>();
+
+        Collection<Film> films = getFilms();
+        for (Film film: films) {
+            for (Director director: film.getDirectors()) {
+                if (director.getName().contains(query)) {
+                    result.add(film);
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 }

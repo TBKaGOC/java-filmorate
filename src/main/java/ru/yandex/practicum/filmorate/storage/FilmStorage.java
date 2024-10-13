@@ -63,4 +63,8 @@ public interface FilmStorage {
 
 
     Collection<Film> getCommonFilms(int userId, int friendId);
+
+    Collection<Film> searchByTitle(String query);
+
+    Collection<Film> searchByDirector(String query) throws NotFoundException;
 }

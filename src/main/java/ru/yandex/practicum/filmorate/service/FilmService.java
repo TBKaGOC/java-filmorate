@@ -43,12 +43,12 @@ public class FilmService {
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
-        if (!CollectionUtils.isEmpty(film.getDirectors())) {
-            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
-        }
         int id = storage.addFilm(mapper.mapToFilm(film));
         log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+        }
     }
 
     public FilmDto updateFilm(FilmDto film) throws NotFoundException, CorruptedDataException {
@@ -191,5 +191,27 @@ public class FilmService {
         }
 
         return result;
+    }
+
+    public Collection<FilmDto> search(String query, String by) throws NotFoundException {
+        List<Film> result = new ArrayList<>();
+
+        if (by.contains("director")) {
+            result.addAll(storage.searchByDirector(query));
+        }
+        if (by.contains("title")) {
+            result.addAll(storage.searchByTitle(query));
+        }
+
+        return result.stream()
+                .sorted((e1, e2) -> {
+                    if (e1.getLikesNumber() != e2.getLikesNumber()) {
+                        return e2.getLikesNumber() - e1.getLikesNumber();
+                    } else {
+                        return e1.getId() - e2.getId();
+                    }
+                })
+                .map(mapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 }
