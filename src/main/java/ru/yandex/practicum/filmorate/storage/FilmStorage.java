@@ -66,5 +66,5 @@ public interface FilmStorage {
 
     Collection<Film> searchByTitle(String query);
 
-    Collection<Film> searchByDirector(String query) throws NotFoundException;
+    Collection<Film> searchByDirector(String query);
 }

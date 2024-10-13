@@ -193,7 +193,7 @@ public class FilmService {
         return result;
     }
 
-    public Collection<FilmDto> search(String query, String by) throws NotFoundException {
+    public Collection<FilmDto> search(String query, String by) {
         List<Film> result = new ArrayList<>();
 
         if (by.contains("director")) {

@@ -396,26 +396,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> searchByDirector(String query) throws NotFoundException {
-        /*return findMany(SEARCH_BY_DIRECTOR_QUERY, query).stream().peek(film -> {
+    public Collection<Film> searchByDirector(String query) {
+        return findMany(SEARCH_BY_DIRECTOR_QUERY, query).stream().peek(film -> {
             try {
                 foldFilm(film.getId(), film);
             } catch (NotFoundException e) {
                 throw new RuntimeException(e);
             }
-        }).collect(Collectors.toList());*/
-        List<Film> result = new ArrayList<>();
-
-        Collection<Film> films = getFilms();
-        for (Film film: films) {
-            for (Director director: film.getDirectors()) {
-                if (director.getName().contains(query)) {
-                    result.add(film);
-                    break;
-                }
-            }
-        }
-
-        return result;
+        }).collect(Collectors.toList());
     }
 }
