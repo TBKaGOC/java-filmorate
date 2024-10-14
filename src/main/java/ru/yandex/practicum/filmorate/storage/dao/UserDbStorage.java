@@ -22,8 +22,33 @@ import java.util.Set;
 public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
-    private static final String FIND_FRIENDS_QUERY = "SELECT * FROM users WHERE id IN (SELECT sender AS id FROM friends WHERE recipient = ? AND confirmed = TRUE UNION SELECT recipient AS id FROM friends WHERE sender = ? AND confirmed = TRUE)";
-    private static final String FIND_MUTUAL_FRIEND_QUERY = "SELECT * FROM users WHERE id IN (SELECT recipient AS id FROM friends WHERE sender = ? AND recipient IN (SELECT recipient AS id FROM friends WHERE sender = ? UNION SELECT sender AS id FROM friends WHERE recipient = ?) UNION SELECT sender AS id FROM friends WHERE recipient = ? AND sender IN (SELECT recipient AS id FROM friends WHERE sender = ? UNION SELECT sender AS id FROM friends WHERE recipient = ?))";
+    private static final String FIND_FRIENDS_QUERY =
+            "SELECT u.* " +
+            "FROM friends f " +
+            "   JOIN users u on u.id = f.recipient " +
+            "WHERE f.sender = ?";
+    private static final String FIND_MUTUAL_FRIEND_QUERY =
+            "SELECT u.* " +
+            "FROM users u " +
+            "   JOIN(SELECT recipient " +
+            "        FROM friends " +
+            "        WHERE sender = ? " +
+            "        INTERSECT " +
+            "        SELECT recipient " +
+            "        FROM friends " +
+            "        WHERE sender = ? " +
+            "       ) f on f.recipient = u.id";
+    private static final String FIND_COMMON_FRIEND_QUERY =
+            "SELECT u.* " +
+                    "FROM users u " +
+                    "   JOIN(SELECT recipient " +
+                    "        FROM friends " +
+                    "        WHERE sender = ? " +
+                    "        INTERSECT " +
+                    "        SELECT recipient " +
+                    "        FROM friends " +
+                    "        WHERE sender = ? " +
+                    "       ) f on f.recipient = u.id";
     private static final String ADD_QUERY = "INSERT INTO users (email, login, name, birthday) " +
             "VALUES (?, ?, ?, ?)";
 
@@ -36,8 +61,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                                                         "WHERE sender = ? AND recipient = ?" +
                                                         "OR sender = ? AND recipient = ?";
     private static final String DELETE_QUERY = "DELETE FROM users WHERE id = ?";
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? AND sender = ?" +
-            "OR sender = ? AND recipient = ? AND confirmed = ?";
+    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? AND sender = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM users WHERE id = ?) AS b";
 
     private final FeedDbStorage feedDbStorage;
@@ -76,12 +100,12 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Collection<User> getFriends(Integer id) {
-        return findMany(FIND_FRIENDS_QUERY, id, id);
+        return findMany(FIND_FRIENDS_QUERY, id);
     }
 
     @Override
     public Set<User> getMutualFriend(Integer id1, Integer id2) {
-        return Set.copyOf(findMany(FIND_MUTUAL_FRIEND_QUERY, id1, id2, id2, id1, id2, id2));
+        return Set.copyOf(findMany(FIND_MUTUAL_FRIEND_QUERY, id1, id2));
     }
 
     @Override
@@ -140,8 +164,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public void deleteFriend(Integer recipient, Integer sender) throws NotFoundException {
-        if (getFriends(recipient).contains(getUser(sender)) && getFriends(sender).contains(getUser(recipient))) {
-            update(DELETE_FRIEND_QUERY, recipient, sender, recipient, sender, true);
+        if (getFriends(sender).contains(getUser(recipient))) {
+            update(DELETE_FRIEND_QUERY, recipient, sender);
 
             feedDbStorage.addFeed(Feed.builder()
                     .userId(sender)

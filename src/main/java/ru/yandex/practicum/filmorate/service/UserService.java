@@ -46,6 +46,8 @@ public class UserService {
 
         var friends = storage.getFriends(id);
 
+        log.trace(String.format("Для пользователя %s вернул %s друзей", id, friends.size()));
+
         return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toList());
     }
 
@@ -64,25 +66,17 @@ public class UserService {
             log.warn("Не удалось отправить заявку пользователю {}", recipient);
             throw new NotFoundException("Пользователь " + recipient + " не найден");
         }
-        User senderUser = storage.getUser(sender);
-        User recipientUser = storage.getUser(recipient);
 
-        if (senderUser.getFriends().contains(recipient)) {
-            recipientUser.addFriend(senderUser, true);
-            senderUser.addFriend(recipientUser, true);
-            storage.addFriend(recipientUser, senderUser, true);
-            storage.addFriend(senderUser, recipientUser, true);
-        } else {
-            senderUser.addFriend(recipientUser, false);
-            recipientUser.addFriend(senderUser, false);
+        var friends = storage.getFriends(sender);
+
+        if (!friends.contains(recipient)) {
+            User senderUser = storage.getUser(sender);
+            User recipientUser = storage.getUser(recipient);
+
             storage.addFriend(recipientUser, senderUser, false);
-            storage.addFriend(senderUser, recipientUser, false);
         }
 
-        log.info("Друзьями успешно стали быть пользователи {} и {}", sender, recipient);
-
-        mapper.mapToUserDto(senderUser);
-        mapper.mapToUserDto(recipientUser);
+        log.info("Для пользователя {} добавлен друг {} ", sender, recipient);
     }
 
     public UserDto updateUser(UserDto user) throws NotFoundException, DuplicatedDataException {
@@ -142,17 +136,20 @@ public class UserService {
             log.warn("Не удалось пользователя {} из друзей пользователя {}", recipient, sender);
             throw new NotFoundException("Пользователь " + recipient + " не найден");
         }
-        User user1 = storage.getUser(sender);
-        User user2 = storage.getUser(recipient);
-        user1.deleteFriend(user2);
-        user2.deleteFriend(user1);
+//        User user1 = storage.getUser(sender);
+//        User user2 = storage.getUser(recipient);
+//        user1.deleteFriend(user2);
+//        user2.deleteFriend(user1);
         storage.deleteFriend(recipient, sender);
-        storage.deleteFriend(sender, recipient);
-        log.info("Друзьями успешно перестали быть пользователи {} и {}", sender, recipient);
+        //storage.deleteFriend(sender, recipient);
+        log.info("Для пользователя {} удален друг {} ", sender, recipient);
     }
 
     public Set<UserDto> getMutualFriend(Integer user1, Integer user2) throws NotFoundException {
         var friends = storage.getMutualFriend(user1, user2);
+
+        log.trace(String.format("Для пользователей %s, %s вернул %s друзей", user1, user2, friends.size()));
+
         return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
     }
 
