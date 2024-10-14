@@ -73,4 +73,9 @@ public class FilmController {
                                                  String sortConditions) throws NotFoundException {
         return service.findDirectorFilms(directorId, sortConditions);
     }
+
+    @GetMapping("/search")
+    public Collection<FilmDto> search(@RequestParam String query, @RequestParam String by) throws NotFoundException {
+        return service.search(query, by);
+    }
 }

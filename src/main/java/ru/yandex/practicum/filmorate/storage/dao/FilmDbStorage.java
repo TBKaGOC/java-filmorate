@@ -16,6 +16,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -55,18 +56,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
-            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "ORDER BY EXTRACT(YEAR FROM f.release_date)";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
-            "f.release_date, f.duration, f.rating_id " +
-            "FROM films_directors AS fd " +
-            "LEFT JOIN films AS f ON fd.film_id = f.id " +
-            "LEFT JOIN liked_user AS l ON l.film_id = f.id " +
+            "ORDER BY f.release_date";
+    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
+            "LEFT OUTER JOIN liked_user AS lu ON lu.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
-            "ORDER BY COUNT(l.user_id) DESC";
+            "GROUP BY f.id " +
+            "ORDER BY COUNT(lu.user_id) DESC";
     private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? ";
@@ -81,7 +92,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
-    private static final String FIND_COMMONFILMS =
+    private static final String FIND_COMMON_FILMS =
             "SELECT id, name, description, release_date, duration, rating_id " +
             "FROM( " +
             "     SELECT film_id " +
@@ -96,6 +107,23 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "   JOIN liked_user ls on ls.film_id = f.id " +
             "GROUP BY id, name, description, release_date, duration, rating_id " +
             "ORDER BY COUNT(ls.user_id)";
+    private static final String SEARCH_BY_TITLE_QUERY = "SELECT * FROM films WHERE POSITION (?, name) <> 0";
+    private static final String SEARCH_BY_DIRECTOR_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "WHERE f.id IN (" +
+                "SELECT film_id " +
+                "FROM films_directors " +
+                "WHERE director_id IN (" +
+                    "SELECT id " +
+                    "FROM directors " +
+                    "WHERE POSITION (?, name) <> 0" +
+                ")" +
+            ")";
     private final ReviewDbStorage reviewDbStorage;
     private final DirectorDbStorage directorDbStorage;
 
@@ -317,7 +345,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getCommonFilms(int userId, int friendId) {
-        return findMany(FIND_COMMONFILMS, userId, friendId)
+        return findMany(FIND_COMMON_FILMS, userId, friendId)
                 .stream()
                 .peek(i -> {
                     try {
@@ -367,5 +395,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public Collection<Film> getUsersLikedFilms(int userId) {
         return findMany(GET_USERS_FILMS_QUERY, userId);
+    }
+
+    @Override
+    public Collection<Film> searchByTitle(String query) {
+        return findMany(SEARCH_BY_TITLE_QUERY, query).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<Film> searchByDirector(String query) {
+        return findMany(SEARCH_BY_DIRECTOR_QUERY, query).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 }

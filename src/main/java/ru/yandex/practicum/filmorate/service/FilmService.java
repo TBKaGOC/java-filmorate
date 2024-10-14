@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
@@ -43,12 +42,12 @@ public class FilmService {
     }
 
     public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
-        if (!CollectionUtils.isEmpty(film.getDirectors())) {
-            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
-        }
         int id = storage.addFilm(mapper.mapToFilm(film));
         log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+        }
     }
 
     public FilmDto updateFilm(FilmDto film) throws NotFoundException, CorruptedDataException {
@@ -70,8 +69,12 @@ public class FilmService {
             if (film.getDuration() != null) {
                 oldFilm.setDuration(film.getDuration());
             }
-            if (!CollectionUtils.isEmpty(film.getDirectors())) {
-                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+            if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+                LinkedHashSet<Integer> directors = directorStorage.findDirectorsIdsByFilmId(film.getId());
+                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors().stream()
+                        .filter(d -> !directors.contains(d.getId()))
+                        .collect(Collectors.toSet())
+                ));
             }
             storage.updateFilm(oldFilm);
             log.info("Успешно обновлён фильм {}", film.getId());
@@ -82,7 +85,7 @@ public class FilmService {
         }
     }
 
-    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, LinkedHashSet<Director> inputDirectors)
+    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, Set<Director> inputDirectors)
             throws NotFoundException {
         LinkedHashSet<Director> directors = new LinkedHashSet<>();
         for (Director director : inputDirectors) {
@@ -191,5 +194,27 @@ public class FilmService {
         }
 
         return result;
+    }
+
+    public Collection<FilmDto> search(String query, String by) {
+        List<Film> result = new ArrayList<>();
+
+        if (by.contains("director")) {
+            result.addAll(storage.searchByDirector(query));
+        }
+        if (by.contains("title")) {
+            result.addAll(storage.searchByTitle(query));
+        }
+
+        return result.stream()
+                .sorted((e1, e2) -> {
+                    if (e1.getLikesNumber() != e2.getLikesNumber()) {
+                        return e2.getLikesNumber() - e1.getLikesNumber();
+                    } else {
+                        return e1.getId() - e2.getId();
+                    }
+                })
+                .map(mapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 }
