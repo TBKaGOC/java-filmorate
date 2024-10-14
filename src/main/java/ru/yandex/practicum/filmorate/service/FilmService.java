@@ -19,6 +19,7 @@ import ru.yandex.practicum.filmorate.storage.dao.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.dao.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.dao.RatingDbStorage;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,8 +71,12 @@ public class FilmService {
             if (film.getDuration() != null) {
                 oldFilm.setDuration(film.getDuration());
             }
-            if (!CollectionUtils.isEmpty(film.getDirectors())) {
-                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
+            if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+                LinkedHashSet<Integer> directors = directorStorage.findDirectorsIdsByFilmId(film.getId());
+                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors().stream()
+                        .filter(d -> !directors.contains(d.getId()))
+                        .collect(Collectors.toSet())
+                ));
             }
             storage.updateFilm(oldFilm);
             log.info("Успешно обновлён фильм {}", film.getId());
@@ -82,7 +87,7 @@ public class FilmService {
         }
     }
 
-    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, LinkedHashSet<Director> inputDirectors)
+    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, Set<Director> inputDirectors)
             throws NotFoundException {
         LinkedHashSet<Director> directors = new LinkedHashSet<>();
         for (Director director : inputDirectors) {

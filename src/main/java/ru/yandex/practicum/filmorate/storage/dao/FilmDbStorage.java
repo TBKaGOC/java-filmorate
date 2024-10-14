@@ -56,18 +56,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
-            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "ORDER BY EXTRACT(YEAR FROM f.release_date)";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
-            "f.release_date, f.duration, f.rating_id " +
-            "FROM films_directors AS fd " +
-            "LEFT JOIN films AS f ON fd.film_id = f.id " +
-            "LEFT JOIN liked_user AS l ON l.film_id = f.id " +
+            "ORDER BY f.release_date";
+    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, " +
+            "f.name, " +
+            "f.description, " +
+            "f.release_date, " +
+            "f.duration, " +
+            "f.rating_id " +
+            "FROM films AS f " +
+            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
+            "LEFT OUTER JOIN liked_user AS lu ON lu.film_id = f.id " +
             "WHERE fd.director_id = ? " +
-            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
-            "ORDER BY COUNT(l.user_id) DESC";
+            "GROUP BY f.id " +
+            "ORDER BY COUNT(lu.user_id) DESC";
     private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
             "LEFT JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? ";
