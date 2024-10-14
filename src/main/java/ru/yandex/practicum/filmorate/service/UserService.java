@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.FeedDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.FeedMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserStorage storage;
     private final UserMapper mapper;
+    private final FeedMapper feedMapper;
 
     public Collection<UserDto> getUsers() {
         return storage.getUsers().stream().map(mapper::mapToUserDto).collect(Collectors.toList());
@@ -41,7 +44,12 @@ public class UserService {
             log.warn("Не удалось получить друзей пользователя {}", id);
             throw new NotFoundException("Пользователь " + id + " не найден");
         }
-        return storage.getFriends(id).stream().map(mapper::mapToUserDto).collect(Collectors.toList());
+
+        var friends = storage.getFriends(id);
+
+        log.trace(String.format("Для пользователя %s вернул %s друзей", id, friends.size()));
+
+        return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toList());
     }
 
     public void addUser(UserDto user) throws DuplicatedDataException, NotFoundException {
@@ -59,18 +67,21 @@ public class UserService {
             log.warn("Не удалось отправить заявку пользователю {}", recipient);
             throw new NotFoundException("Пользователь " + recipient + " не найден");
         }
+
+        var friends = storage.getFriends(sender);
+
         User senderUser = storage.getUser(sender);
         User recipientUser = storage.getUser(recipient);
 
-        if (senderUser.getFriends().contains(recipient)) {
-            recipientUser.addFriend(senderUser, true);
-            senderUser.addFriend(recipientUser, true);
-            storage.addFriend(recipientUser, senderUser, true);
-        } else {
-            recipientUser.addFriend(senderUser, false);
-            storage.addFriend(senderUser, recipientUser, false);
+        if (!friends.contains(recipient)) {
+
+            storage.addFriend(recipientUser, senderUser, false);
         }
-        return List.of(mapper.mapToUserDto(senderUser), mapper.mapToUserDto(recipientUser));
+
+        log.info("Для пользователя {} добавлен друг {} ", sender, recipient);
+
+        return List.of(mapper.mapToUserDto(senderUser),
+                mapper.mapToUserDto(recipientUser));
     }
 
     public UserDto updateUser(UserDto user) throws NotFoundException, DuplicatedDataException {
@@ -133,15 +144,33 @@ public class UserService {
             log.warn("Не удалось пользователя {} из друзей пользователя {}", recipient, sender);
             throw new NotFoundException("Пользователь " + recipient + " не найден");
         }
-        User user1 = storage.getUser(sender);
-        User user2 = storage.getUser(recipient);
-        user1.deleteFriend(user2);
-        user2.deleteFriend(user1);
-        storage.deleteFriend(sender, recipient);
-        log.info("Друзьями успешно перестали быть пользователи {} и {}", sender, recipient);
+//        User user1 = storage.getUser(sender);
+//        User user2 = storage.getUser(recipient);
+//        user1.deleteFriend(user2);
+//        user2.deleteFriend(user1);
+        storage.deleteFriend(recipient, sender);
+        //storage.deleteFriend(sender, recipient);
+        log.info("Для пользователя {} удален друг {} ", sender, recipient);
     }
 
     public Set<UserDto> getMutualFriend(Integer user1, Integer user2) throws NotFoundException {
-        return storage.getMutualFriend(user1, user2).stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
+        var friends = storage.getMutualFriend(user1, user2);
+
+        log.trace(String.format("Для пользователей %s, %s вернул %s друзей", user1, user2, friends.size()));
+
+        return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
+    }
+
+    public Collection<FeedDto> getFeeds(int userId, String count) {
+        log.trace(String.format("Request to get feeds userId %s and limit %s", userId, count));
+
+        var resultDTO = storage.getFeeds(userId, count);
+
+        var result = resultDTO
+                .stream()
+                .map(feedMapper::mapToFeedDto)
+                .toList();
+
+        return result;
     }
 }

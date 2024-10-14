@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FeedDto;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
@@ -38,6 +39,13 @@ public class UserController {
     public Collection<UserDto> getMutualFriends(@PathVariable int id, @PathVariable int otherId)
             throws NotFoundException {
         return service.getMutualFriend(id, otherId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public Collection<FeedDto> getFeeds(
+            @PathVariable int id,
+            @RequestParam(required = false, defaultValue = "10") String count) {
+        return service.getFeeds(id, count);
     }
 
     @GetMapping("/{id}/recommendations")

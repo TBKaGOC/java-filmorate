@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 @Qualifier("InMemoryUserStorage")
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
+    private final Map<Integer, Set<Feed>> feeds = new HashMap<>();
 
     @Override
     public Collection<User> getUsers() {
@@ -98,6 +100,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public void deleteUser(Integer id) {
+        feeds.remove(id);
         users.remove(id);
     }
 
@@ -109,6 +112,16 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public boolean contains(Integer id) {
         return users.containsKey(id);
+    }
+
+    @Override
+    public Collection<Feed> getFeeds(int userId, String count) {
+        var limit = Integer.parseInt(count);
+        return feeds.get(userId)
+                .stream()
+                .sorted(Comparator.comparingLong(i -> -1 * i.getTimestamp()))
+                .limit(limit)
+                .toList();
     }
 
     private int getNextId() {

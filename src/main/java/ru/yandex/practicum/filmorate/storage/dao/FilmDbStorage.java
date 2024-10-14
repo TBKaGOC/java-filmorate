@@ -6,9 +6,12 @@ import org.springframework.jdbc.SQLWarningException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dto.FeedEventType;
+import ru.yandex.practicum.filmorate.dto.FeedOperationType;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -25,35 +28,35 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     //Не проходило по длине checkStyle
     private static final String FIND_ALL =
             "SELECT * " +
-                    "FROM films";
+            "FROM films";
     private static final String FIND_BY_ID_QUERY =
             "SELECT * " +
-                    "FROM films " +
-                    "WHERE id = ?";
+            "FROM films " +
+            "WHERE id = ?";
     private static final String FIND_MOST_POPULAR_QUERY =
             "SELECT id, name, description, release_date, duration, rating_id " +
-                    "FROM films AS f " +
-                    "    LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id " +
-                    "GROUP BY f.id " +
-                    "ORDER BY COUNT(l.user_id) " +
-                    "DESC LIMIT ?";
+            "FROM films AS f " +
+            "    LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id " +
+            "GROUP BY f.id " +
+            "ORDER BY COUNT(l.user_id) " +
+            "DESC LIMIT ?";
     private static final String ADD_QUERY =
             "INSERT INTO films (name, description, release_date, duration, rating_id) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+            "VALUES (?, ?, ?, ?, ?)";
     private static final String ADD_GENRE_QUERY =
             "INSERT INTO film_genre (film_id, genre_id) " +
-                    "VALUES (?, ?)";
+            "VALUES (?, ?)";
     private static final String ADD_LIKE_QUERY =
             "INSERT INTO liked_user (film_id, user_id) " +
-                    "VALUES (?, ?)";
+            "VALUES (?, ?)";
     private static final String UPDATE_FILM_QUERY =
             "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? " +
-                    "WHERE id = ?";
+            "WHERE id = ?";
     private static final String DELETE_QUERY =
             "DELETE FROM films WHERE id = ?";
     private static final String DELETE_LIKE_QUERY =
             "DELETE FROM liked_user " +
-                    "WHERE film_id = ? AND user_id = ?";
+            "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
     private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.id, " +
@@ -124,20 +127,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "WHERE POSITION (?, name) <> 0" +
                 ")" +
             ")";
+  
     private final ReviewDbStorage reviewDbStorage;
+    private final FeedDbStorage feedDbStorage;
     private final DirectorDbStorage directorDbStorage;
+    private final RatingDbStorage ratingStorage;
+    private final GenreDbStorage genreStorage;
 
 
     public FilmDbStorage(JdbcTemplate jdbc,
                          RowMapper<Film> mapper,
                          RatingDbStorage ratingStorage,
                          GenreDbStorage genreStorage,
-                         ReviewDbStorage reviewDbStorage, DirectorDbStorage directorDbStorage) {
+                         ReviewDbStorage reviewDbStorage,
+                         DirectorDbStorage directorDbStorage,
+                         FeedDbStorage feedDbStorage) {
         super(jdbc, mapper);
         this.ratingStorage = ratingStorage;
         this.genreStorage = genreStorage;
         this.reviewDbStorage = reviewDbStorage;
         this.directorDbStorage = directorDbStorage;
+        this.feedDbStorage = feedDbStorage;
     }
 
     @Override
@@ -163,6 +173,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw e;
         }
     }
+
+
 
     @Override
     public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
@@ -245,11 +257,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void addLike(int likedUser, int film) {
         update(ADD_LIKE_QUERY, film, likedUser);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(likedUser)
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.LIKE.name())
+                .operation(FeedOperationType.ADD.name())
+                .entityId(film)
+                .build());
     }
 
     @Override
     public void deleteLike(int unlikedUser, int film) {
         update(DELETE_LIKE_QUERY, film, unlikedUser);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(unlikedUser)
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.LIKE.name())
+                .operation(FeedOperationType.REMOVE.name())
+                .entityId(film)
+                .build());
     }
 
     @Override
@@ -269,7 +297,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public int addReview(Review review) {
-        return reviewDbStorage.addReview(review);
+        var result = reviewDbStorage.addReview(review);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.ADD.name())
+                .entityId(result)
+                .build());
+
+        return result;
     }
 
     @Override
@@ -280,11 +318,29 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void updateReview(Review review) {
         reviewDbStorage.updateReview(review);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.UPDATE.name())
+                .entityId(review.getReviewId())
+                .build());
     }
 
     @Override
-    public void deleteReview(int id) {
+    public void deleteReview(int id) throws NotFoundException {
+        var review = reviewDbStorage.getReview(id);
+
         reviewDbStorage.deleteReview(id);
+
+        feedDbStorage.addFeed(Feed.builder()
+                .userId(review.getUserId())
+                .timestamp(new Date().getTime())
+                .eventType(FeedEventType.REVIEW.name())
+                .operation(FeedOperationType.REMOVE.name())
+                .entityId(id)
+                .build());
     }
 
     @Override
