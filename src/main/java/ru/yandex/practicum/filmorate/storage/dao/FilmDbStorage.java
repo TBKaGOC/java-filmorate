@@ -180,7 +180,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         } else if (year != null) {
             return findAllByYear(year).stream().limit(count).toList();
         }
-        return findMany(FIND_MOST_POPULAR_QUERY, count);
+        return findMany(FIND_MOST_POPULAR_QUERY, count).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -365,17 +371,35 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public List<Film> findDirectorFilmsOrderYear(int directorId) {
-        return findMany(FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY, directorId);
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY, directorId).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override
     public List<Film> findDirectorFilmsOrderLikes(int directorId) {
-        return findMany(FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY, directorId);
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY, directorId).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override
     public List<Film> findDirectorFilms(int directorId) {
-        return findMany(FIND_DIRECTOR_FILMS_QUERY, directorId);
+        return findMany(FIND_DIRECTOR_FILMS_QUERY, directorId).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -432,20 +456,47 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     private List<Film> findAllByGenre(int genreId) {
-        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId);
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId)
+                .stream().peek(film -> {
+                    try {
+                        foldFilm(film.getId(), film);
+                    } catch (NotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).collect(Collectors.toList());
     }
 
     private List<Film> findAllByYear(int year) {
-        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", year);
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", year)
+                .stream().peek(film -> {
+                    try {
+                        foldFilm(film.getId(), film);
+                    } catch (NotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).collect(Collectors.toList());
     }
 
     private List<Film> findAllByGenreAndYear(int genreId, int year) {
-        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year);
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year)
+                .stream().peek(film -> {
+                    try {
+                        foldFilm(film.getId(), film);
+                    } catch (NotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+        }).collect(Collectors.toList());
     }
 
     @Override
     public Collection<Film> getUsersLikedFilms(int userId) {
-        return findMany(GET_USERS_FILMS_QUERY, userId);
+        return findMany(GET_USERS_FILMS_QUERY, userId).stream().peek(film -> {
+            try {
+                foldFilm(film.getId(), film);
+            } catch (NotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     @Override

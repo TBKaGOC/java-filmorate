@@ -53,6 +53,9 @@ public class UserService {
     }
 
     public void addUser(UserDto user) throws DuplicatedDataException, NotFoundException {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         int id = storage.addUser(mapper.mapToUser(user));
         log.info("Успешно добавлен новый пользователь {}", id);
         user.setId(id);
