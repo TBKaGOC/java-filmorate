@@ -4,20 +4,25 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.*;
 
 public class FilmStorageTests {
     private FilmStorage filmStorage;
+    private UserStorage userStorage;
 
     @BeforeEach
     public void createNewFilmController() {
         filmStorage = new InMemoryFilmStorage();
+        userStorage = new InMemoryUserStorage();
     }
 
     @Test
@@ -232,5 +237,39 @@ public class FilmStorageTests {
         );
 
         Assertions.assertEquals(filmStorage.getMostPopular(3, null, null), films);
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilms() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        userStorage.addUser(newUser);
+
+        Film film = Film.builder()
+                .duration(1)
+                .releaseDate(LocalDate.now())
+                .description("description")
+                .name("film")
+                .build();
+        filmStorage.addFilm(film);
+        filmStorage.addLike(newUser.getId(), film.getId());
+
+        Assertions.assertEquals(filmStorage.getUsersLikedFilms(newUser.getId()), List.of(film));
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilmsWithoutLikes() throws NotFoundException, DuplicatedDataException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        userStorage.addUser(newUser);
+        Assertions.assertEquals(filmStorage.getUsersLikedFilms(newUser.getId()), List.of());
     }
 }

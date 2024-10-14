@@ -88,6 +88,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String DELETE_FROM_LIKED_USER_QUERY = "DELETE FROM liked_user WHERE film_id = ?";
     private static final String DELETE_FROM_FILMS_DIRECTORS_QUERY = "DELETE FROM films_directors WHERE film_id = ?";
     private static final String DELETE_FROM_REVIEWS_QUERY = "DELETE FROM reviews WHERE film_id = ?";
+    private static final String GET_USERS_FILMS_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f JOIN liked_user AS lu ON lu.film_id = f.id WHERE lu.user_id = ?";
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
@@ -162,8 +163,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw e;
         }
     }
-
-
 
     @Override
     public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
@@ -391,7 +390,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     private List<Film> findAllByGenreAndYear(int genreId, int year) {
         return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year);
+    }
 
+    @Override
+    public Collection<Film> getUsersLikedFilms(int userId) {
+        return findMany(GET_USERS_FILMS_QUERY, userId);
     }
 
     @Override
