@@ -81,7 +81,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
-    private static final String FIND_COMMONFILMS =
+    private static final String FIND_COMMON_FILMS =
             "SELECT id, name, description, release_date, duration, rating_id " +
             "FROM( " +
             "     SELECT film_id " +
@@ -336,7 +336,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getCommonFilms(int userId, int friendId) {
-        return findMany(FIND_COMMONFILMS, userId, friendId)
+        return findMany(FIND_COMMON_FILMS, userId, friendId)
                 .stream()
                 .peek(i -> {
                     try {
