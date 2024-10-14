@@ -38,17 +38,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             "        FROM friends " +
             "        WHERE sender = ? " +
             "       ) f on f.recipient = u.id";
-    private static final String FIND_COMMON_FRIEND_QUERY =
-            "SELECT u.* " +
-                    "FROM users u " +
-                    "   JOIN(SELECT recipient " +
-                    "        FROM friends " +
-                    "        WHERE sender = ? " +
-                    "        INTERSECT " +
-                    "        SELECT recipient " +
-                    "        FROM friends " +
-                    "        WHERE sender = ? " +
-                    "       ) f on f.recipient = u.id";
     private static final String ADD_QUERY = "INSERT INTO users (email, login, name, birthday) " +
             "VALUES (?, ?, ?, ?)";
 
@@ -61,6 +50,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                                                         "WHERE sender = ? AND recipient = ?" +
                                                         "OR sender = ? AND recipient = ?";
     private static final String DELETE_QUERY = "DELETE FROM users WHERE id = ?";
+    private static final String DELETE_FROM_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? or sender = ?";
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE recipient = ? AND sender = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT id FROM users WHERE id = ?) AS b";
 
@@ -159,6 +149,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     public void deleteUser(Integer id) {
         feedDbStorage.deleteFeedByUserId(id);
 
+        update(DELETE_FROM_FRIEND_QUERY, id, id);
         delete(DELETE_QUERY, id);
     }
 

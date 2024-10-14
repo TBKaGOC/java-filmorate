@@ -70,3 +70,14 @@ CREATE TABLE IF NOT EXISTS reviewLikes (
     useful INTEGER,
     PRIMARY KEY(review_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS directors (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS films_directors (
+    film_id INTEGER NOT NULL,
+    director_id INTEGER NOT NULL,
+    PRIMARY KEY (film_id, director_id)
+);

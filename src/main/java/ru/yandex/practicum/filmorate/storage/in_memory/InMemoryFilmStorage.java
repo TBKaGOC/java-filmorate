@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -35,17 +36,26 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostPopular(String count) {
-        int sizeOfTop =  Integer.parseInt(count);
-
-        List<Film> resultList = films.values().stream()
-                .sorted(Comparator.comparing(Film::getLikesNumber).reversed())
-                .toList();
-        if (sizeOfTop >= resultList.size()) {
-            return resultList;
-        } else {
-            return resultList.subList(0, sizeOfTop);
+    public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
+        List<Film> resultList = films.values().stream().toList();
+        if (genreId != null && year != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
+                    .filter(film -> film.getReleaseDate().getYear() == year)
+                    .toList();
+        } else if (genreId != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId)))
+                    .toList();
+        } else if (year != null) {
+            resultList = resultList.stream()
+                    .filter(film -> film.getReleaseDate().getYear() == year)
+                    .toList();
         }
+        return resultList.stream()
+                .sorted(Comparator.comparing(Film::getLikesNumber).reversed())
+                .limit(count)
+                .toList();
     }
 
     @Override
@@ -218,6 +228,38 @@ public class InMemoryFilmStorage implements FilmStorage {
                         .build());
     }
 
+    @Override
+    public List<Film> findDirectorFilmsOrderYear(int directorId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> findDirectorFilmsOrderLikes(int directorId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> findDirectorFilms(int directorId) {
+        return null;
+    }
+
+    @Override
+    public LinkedHashSet<Integer> getLikes(int filmId) {
+        return null;
+    }
+
+    @Override
+    public void addDirectorId(int filmId, int directorId) throws DuplicatedDataException {
+
+    }
+
+    @Override
+    public Collection<Film> getUsersLikedFilms(int userId) {
+        return films.values().stream()
+                .filter(film -> film.getLikedUsers().contains(userId))
+                .toList();
+    }
+
     private <T> int getNextId(Map<Integer, T> map) {
         int currentMaxId = map.keySet()
                 .stream()
@@ -226,5 +268,15 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .orElse(0);
 
         return ++currentMaxId;
+    }
+
+    @Override
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return films
+                .values()
+                .stream()
+                .filter(i -> i.getLikedUsers().contains(userId) && i.getLikedUsers().contains(friendId))
+                .sorted(Comparator.comparingInt(i -> -1 * i.getLikesNumber()))
+                .toList();
     }
 }

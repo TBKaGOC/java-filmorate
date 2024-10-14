@@ -4,9 +4,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FeedDto;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.service.RecommendationsService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -16,6 +18,7 @@ import java.util.Collection;
 @RequestMapping("/users")
 public class UserController {
     private final UserService service;
+    private final RecommendationsService recommendationsService;
 
     @GetMapping
     public Collection<UserDto> getUsers() {
@@ -45,6 +48,11 @@ public class UserController {
         return service.getFeeds(id, count);
     }
 
+    @GetMapping("/{id}/recommendations")
+    public Collection<FilmDto> getRecommendations(@PathVariable int id) {
+        return recommendationsService.getRecommendations(id);
+    }
+
     @PostMapping
     public UserDto createUser(@Valid @RequestBody UserDto user) throws DuplicatedDataException, NotFoundException {
         service.addUser(user);
@@ -57,9 +65,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable("id") int id, @PathVariable("friendId") int friendId) throws NotFoundException,
+    public Collection<UserDto> addFriend(@PathVariable int id, @PathVariable int friendId) throws NotFoundException,
             DuplicatedDataException {
-        service.addFriend(id, friendId);
+        return service.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable int userId) {
+        service.deleteUser(userId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")

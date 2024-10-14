@@ -12,7 +12,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.FilmDbStorage;
+import ru.yandex.practicum.filmorate.storage.dao.UserDbStorage;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -23,6 +25,7 @@ import java.util.*;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class FilmDbStorageTests {
     private final FilmDbStorage storage;
+    private final UserDbStorage userStorage;
 
     @Test
     public void testGetAllFilms() throws NotFoundException {
@@ -41,11 +44,36 @@ public class FilmDbStorageTests {
 
     @Test
     public void testGetMostPopular() throws NotFoundException {
-        List<Film> films = storage.getMostPopular("2");
+        List<Film> films = storage.getMostPopular(2, null, null);
 
         Assertions.assertNotNull(films);
         Assertions.assertEquals(films, List.of(storage.getFilm(2),
                 storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithGenre() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(2, 6, null);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(2),
+                storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithYear() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(2, null, 2010);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(4)));
+    }
+
+    @Test
+    public void testGetMostPopularWithGenreAndYear() throws NotFoundException {
+        List<Film> films = storage.getMostPopular(1, 6, 1997);
+
+        Assertions.assertNotNull(films);
+        Assertions.assertEquals(films, List.of(storage.getFilm(2)));
     }
 
     @Test
@@ -160,5 +188,40 @@ public class FilmDbStorageTests {
         film = storage.getFilm(film.getId());
 
         Assertions.assertFalse(film.getLikedUsers().contains(1));
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilms() throws NotFoundException, CorruptedDataException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        newUser.setId(userStorage.addUser(newUser));
+
+        Film film = Film.builder()
+                .duration(1)
+                .releaseDate(LocalDate.now())
+                .description("description")
+                .name("film")
+                .rating(Rating.builder().id(3).name("PG-13").build())
+                .build();
+        film.setId(storage.addFilm(film));
+        storage.addLike(newUser.getId(), film.getId());
+
+        Assertions.assertEquals(storage.getUsersLikedFilms(newUser.getId()), List.of(film));
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilmsWithoutLikes() throws NotFoundException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        userStorage.addUser(newUser);
+        Assertions.assertEquals(storage.getUsersLikedFilms(newUser.getId()), List.of());
     }
 }

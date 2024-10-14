@@ -1,11 +1,13 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public interface FilmStorage {
@@ -13,7 +15,7 @@ public interface FilmStorage {
 
     Film getFilm(Integer id) throws NotFoundException;
 
-    List<Film> getMostPopular(String count);
+    List<Film> getMostPopular(int count, Integer genreId, Integer year);
 
     Integer addFilm(Film film) throws CorruptedDataException, NotFoundException;
 
@@ -48,4 +50,18 @@ public interface FilmStorage {
     List<Review> getReviews();
 
     void updateReviewLike(int reviewId, int userid, int useful);
+
+    List<Film> findDirectorFilmsOrderYear(int directorId);
+
+    List<Film> findDirectorFilmsOrderLikes(int directorId);
+
+    List<Film> findDirectorFilms(int directorId);
+
+    LinkedHashSet<Integer> getLikes(int filmId);
+
+    void addDirectorId(int filmId, int directorId) throws DuplicatedDataException;
+
+    Collection<Film> getCommonFilms(int userId, int friendId);
+
+    Collection<Film> getUsersLikedFilms(int userId);
 }

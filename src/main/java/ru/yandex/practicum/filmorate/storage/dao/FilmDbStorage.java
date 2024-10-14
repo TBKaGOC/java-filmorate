@@ -2,14 +2,17 @@ package ru.yandex.practicum.filmorate.storage.dao;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.SQLWarningException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dto.FeedEventType;
 import ru.yandex.practicum.filmorate.dto.FeedOperationType;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Feed;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -55,11 +58,50 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
+    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.* FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "WHERE fd.director_id = ? " +
+            "ORDER BY EXTRACT(YEAR FROM f.release_date)";
+    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, f.name, f.description, " +
+            "f.release_date, f.duration, f.rating_id " +
+            "FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "LEFT JOIN liked_user AS l ON l.film_id = f.id " +
+            "WHERE fd.director_id = ? " +
+            "GROUP BY f.id, f.name, f.description, f.release_date, f.duration, f.rating_id " +
+            "ORDER BY COUNT(l.user_id) DESC";
+    private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
+            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+            "WHERE fd.director_id = ? ";
+    private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM liked_user WHERE film_id = ?";
+    private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO films_directors(film_id, director_id)" +
+            "VALUES (?, ?)";
+    private static final String DELETE_FROM_GENRE_QUERY = "DELETE FROM film_genre WHERE film_id = ?";
+    private static final String DELETE_FROM_LIKED_USER_QUERY = "DELETE FROM liked_user WHERE film_id = ?";
+    private static final String DELETE_FROM_FILMS_DIRECTORS_QUERY = "DELETE FROM films_directors WHERE film_id = ?";
+    private static final String DELETE_FROM_REVIEWS_QUERY = "DELETE FROM reviews WHERE film_id = ?";
+    private static final String GET_USERS_FILMS_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f JOIN liked_user AS lu ON lu.film_id = f.id WHERE lu.user_id = ?";
+    private static final String FIND_COMMONFILMS =
+            "SELECT id, name, description, release_date, duration, rating_id " +
+            "FROM( " +
+            "     SELECT film_id " +
+            "     FROM liked_user " +
+            "     WHERE user_id = ? " +
+            "     INTERSECT " +
+            "     SELECT film_id " +
+            "     FROM liked_user " +
+            "     WHERE user_id = ? " +
+            "    ) l " +
+            "   JOIN films f on f.id = l.film_id " +
+            "   JOIN liked_user ls on ls.film_id = f.id " +
+            "GROUP BY id, name, description, release_date, duration, rating_id " +
+            "ORDER BY COUNT(ls.user_id)";
 
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
     private final ReviewDbStorage reviewDbStorage;
     private final FeedDbStorage feedDbStorage;
+    private final DirectorDbStorage directorDbStorage;
 
 
     public FilmDbStorage(JdbcTemplate jdbc,
@@ -67,11 +109,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                          RatingDbStorage ratingStorage,
                          GenreDbStorage genreStorage,
                          ReviewDbStorage reviewDbStorage,
+                         DirectorDbStorage directorDbStorage,
                          FeedDbStorage feedDbStorage) {
         super(jdbc, mapper);
         this.ratingStorage = ratingStorage;
         this.genreStorage = genreStorage;
         this.reviewDbStorage = reviewDbStorage;
+        this.directorDbStorage = directorDbStorage;
         this.feedDbStorage = feedDbStorage;
     }
 
@@ -102,8 +146,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
 
     @Override
-    public List<Film> getMostPopular(String count) {
-        return findMany(FIND_MOST_POPULAR_QUERY, Integer.parseInt(count));
+    public List<Film> getMostPopular(int count, Integer genreId, Integer year) {
+        if (genreId != null && year != null) {
+            return findAllByGenreAndYear(genreId, year).stream().limit(count).toList();
+        } else if (genreId != null) {
+            return findAllByGenre(genreId).stream().limit(count).toList();
+        } else if (year != null) {
+            return findAllByYear(year).stream().limit(count).toList();
+        }
+        return findMany(FIND_MOST_POPULAR_QUERY, count);
     }
 
     @Override
@@ -159,12 +210,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
-                film.getName(),
+                film.getRating().getId(),
                 film.getId());
     }
 
     @Override
     public void deleteFilm(Integer id) {
+        delete(DELETE_FROM_REVIEWS_QUERY, id);
+        delete(DELETE_FROM_FILMS_DIRECTORS_QUERY, id);
+        delete(DELETE_FROM_LIKED_USER_QUERY, id);
+        delete(DELETE_FROM_GENRE_QUERY, id);
         delete(DELETE_QUERY, id);
     }
 
@@ -282,6 +337,50 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         reviewDbStorage.updateReviewLike(reviewId, userid, useful);
     }
 
+    @Override
+    public List<Film> findDirectorFilmsOrderYear(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY, directorId);
+    }
+
+    @Override
+    public List<Film> findDirectorFilmsOrderLikes(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY, directorId);
+    }
+
+    @Override
+    public List<Film> findDirectorFilms(int directorId) {
+        return findMany(FIND_DIRECTOR_FILMS_QUERY, directorId);
+    }
+
+    @Override
+    public LinkedHashSet<Integer> getLikes(int filmId) {
+        return new LinkedHashSet<>(jdbc.query(FIND_LIKES_BY_ID_QUERY,
+                (rs, rowNum) -> rs.getInt("user_id"), filmId));
+    }
+
+    @Override
+    public void addDirectorId(int filmId, int directorId) throws DuplicatedDataException {
+        try {
+            update(INSERT_FILM_DIRECTOR_QUERY, filmId, directorId);
+        } catch (SQLWarningException e) {
+            throw new DuplicatedDataException(String.format("Для фильма %s режиссер %s уже установлен. %s",
+                    filmId, directorId, e.getSQLWarning()));
+        }
+    }
+
+    @Override
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return findMany(FIND_COMMONFILMS, userId, friendId)
+                .stream()
+                .peek(i -> {
+                    try {
+                        foldFilm(i.getId(), i);
+                    } catch (NotFoundException ignored) {
+
+                    }
+                })
+                .toList();
+    }
 
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
@@ -291,10 +390,35 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 Integer.class, id);
         Set<Genre> resultGenres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
 
-        for (Integer genre: genres) {
+        for (Integer genre : genres) {
             resultGenres.add(genreStorage.getGenre(genre));
+        }
+        List<Integer> directorsIds = jdbc.queryForList(
+                "SELECT director_id FROM films_directors WHERE film_id = ?",
+                Integer.class, id);
+        LinkedHashSet<Director> directors = new LinkedHashSet<>();
+        for (Integer directorId : directorsIds) {
+            directors.add(directorDbStorage.findDirector(directorId));
         }
         result.setGenres(resultGenres);
         result.setLikedUsers(Set.copyOf(likes));
+        result.setDirectors(directors);
+    }
+
+    private List<Film> findAllByGenre(int genreId) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId);
+    }
+
+    private List<Film> findAllByYear(int year) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", year);
+    }
+
+    private List<Film> findAllByGenreAndYear(int genreId, int year) {
+        return findMany("SELECT id, name, description, release_date, duration, rating_id FROM films AS f LEFT OUTER JOIN liked_user AS l ON f.id = l.film_id WHERE f.id IN (SELECT film_id FROM film_genre WHERE genre_id = ?) AND EXTRACT(YEAR FROM f.release_date) = ? GROUP BY f.id ORDER BY COUNT(l.user_id) DESC", genreId, year);
+    }
+
+    @Override
+    public Collection<Film> getUsersLikedFilms(int userId) {
+        return findMany(GET_USERS_FILMS_QUERY, userId);
     }
 }

@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,7 @@ public class UserService {
         user.setId(id);
     }
 
-    public void addFriend(Integer sender, Integer recipient) throws NotFoundException {
+    public Collection<UserDto> addFriend(Integer sender, Integer recipient) throws NotFoundException {
         if (!storage.contains(sender)) {
             log.warn("Не удалось отправить заявку пользователя {}", sender);
             throw new NotFoundException("Пользователь " + sender + " не найден");
@@ -69,14 +70,18 @@ public class UserService {
 
         var friends = storage.getFriends(sender);
 
+        User senderUser = storage.getUser(sender);
+        User recipientUser = storage.getUser(recipient);
+
         if (!friends.contains(recipient)) {
-            User senderUser = storage.getUser(sender);
-            User recipientUser = storage.getUser(recipient);
 
             storage.addFriend(recipientUser, senderUser, false);
         }
 
         log.info("Для пользователя {} добавлен друг {} ", sender, recipient);
+
+        return List.of(mapper.mapToUserDto(senderUser),
+                mapper.mapToUserDto(recipientUser));
     }
 
     public UserDto updateUser(UserDto user) throws NotFoundException, DuplicatedDataException {
@@ -126,6 +131,9 @@ public class UserService {
         }
     }
 
+    public void deleteUser(Integer userId) {
+        storage.deleteUser(userId);
+    }
 
     public void deleteFriend(Integer sender, Integer recipient) throws NotFoundException {
         if (!storage.contains(sender)) {
