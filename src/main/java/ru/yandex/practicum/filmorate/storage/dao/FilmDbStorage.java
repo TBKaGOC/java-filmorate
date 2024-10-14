@@ -92,9 +92,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String DELETE_FROM_FILMS_DIRECTORS_QUERY = "DELETE FROM films_directors WHERE film_id = ?";
     private static final String DELETE_FROM_REVIEWS_QUERY = "DELETE FROM reviews WHERE film_id = ?";
     private static final String GET_USERS_FILMS_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f JOIN liked_user AS lu ON lu.film_id = f.id WHERE lu.user_id = ?";
-
-    private final RatingDbStorage ratingStorage;
-    private final GenreDbStorage genreStorage;
     private static final String FIND_COMMON_FILMS =
             "SELECT id, name, description, release_date, duration, rating_id " +
             "FROM( " +
@@ -127,13 +124,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "WHERE POSITION (?, name) <> 0" +
                 ")" +
             ")";
-  
     private final ReviewDbStorage reviewDbStorage;
     private final FeedDbStorage feedDbStorage;
     private final DirectorDbStorage directorDbStorage;
     private final RatingDbStorage ratingStorage;
     private final GenreDbStorage genreStorage;
-
 
     public FilmDbStorage(JdbcTemplate jdbc,
                          RowMapper<Film> mapper,
