@@ -61,6 +61,7 @@ public interface FilmStorage {
 
     void addDirectorId(int filmId, int directorId) throws DuplicatedDataException;
 
-
     Collection<Film> getCommonFilms(int userId, int friendId);
+
+    Collection<Film> getUsersLikedFilms(int userId);
 }

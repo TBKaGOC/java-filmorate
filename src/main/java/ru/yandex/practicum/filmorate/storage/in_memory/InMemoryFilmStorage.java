@@ -253,6 +253,13 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     }
 
+    @Override
+    public Collection<Film> getUsersLikedFilms(int userId) {
+        return films.values().stream()
+                .filter(film -> film.getLikedUsers().contains(userId))
+                .toList();
+    }
+
     private <T> int getNextId(Map<Integer, T> map) {
         int currentMaxId = map.keySet()
                 .stream()
