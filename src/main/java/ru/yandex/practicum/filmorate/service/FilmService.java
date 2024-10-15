@@ -69,12 +69,20 @@ public class FilmService {
             if (film.getDuration() != null) {
                 oldFilm.setDuration(film.getDuration());
             }
+            if (film.getMpa() != null) {
+                oldFilm.setRating(film.getMpa());
+            }
             if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
                 LinkedHashSet<Integer> directors = directorStorage.findDirectorsIdsByFilmId(film.getId());
                 oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors().stream()
                         .filter(d -> !directors.contains(d.getId()))
                         .collect(Collectors.toSet())
                 ));
+            } else {
+                storage.deleteDirectorsId(film.getId());
+            }
+            if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+                oldFilm.setGenres(film.getGenres());
             }
             storage.updateFilm(oldFilm);
             log.info("Успешно обновлён фильм {}", film.getId());

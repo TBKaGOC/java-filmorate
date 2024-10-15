@@ -19,7 +19,7 @@ public interface FilmStorage {
 
     Integer addFilm(Film film) throws CorruptedDataException, NotFoundException;
 
-    void updateFilm(Film film);
+    void updateFilm(Film film) throws CorruptedDataException;
 
     void deleteFilm(Integer id);
 
@@ -60,6 +60,8 @@ public interface FilmStorage {
     LinkedHashSet<Integer> getLikes(int filmId);
 
     void addDirectorId(int filmId, int directorId) throws DuplicatedDataException;
+
+    void deleteDirectorsId(int filmId);
 
     Collection<Film> getCommonFilms(int userId, int friendId);
 

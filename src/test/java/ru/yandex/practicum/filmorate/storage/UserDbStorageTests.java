@@ -8,13 +8,14 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.dao.UserDbStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @JdbcTest
 @ComponentScan("ru.yandex.practicum.filmorate")
@@ -25,6 +26,14 @@ public class UserDbStorageTests {
 
     @Test
     public void testGetAllUser() {
+        User user = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        storage.addUser(user);
         Collection<User> users = storage.getUsers();
 
         Assertions.assertFalse(users.isEmpty());
@@ -32,26 +41,93 @@ public class UserDbStorageTests {
 
     @Test
     public void testGetUser() throws NotFoundException {
-        User user = storage.getUser(1);
+        User user = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        storage.addUser(user);
+        User user1 = storage.getUser(user.getId());
 
-        Assertions.assertNotNull(user);
-        Assertions.assertEquals(user.getId(), 1);
+        Assertions.assertNotNull(user1);
+        Assertions.assertEquals(user1.getId(), user.getId());
     }
 
     @Test
     public void testGetFriends() throws NotFoundException {
-        Collection<User> friends = storage.getFriends(1);
+        User user1 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        User user2 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        User user3 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        storage.addUser(user1);
+        storage.addUser(user2);
+        storage.addUser(user3);
+        storage.addFriend(user3, user1, false);
+        storage.addFriend(user2, user1, false);
+        storage.addFriend(user1, user3, true);
+        storage.addFriend(user1, user2, true);
+
+        Collection<User> friends = storage.getFriends(user1.getId());
 
         Assertions.assertNotNull(friends);
-        Assertions.assertTrue(friends.containsAll(List.of(storage.getUser(2), storage.getUser(3))));
+        Assertions.assertTrue(friends.containsAll(List.of(storage.getUser(user2.getId()),
+                storage.getUser(user3.getId()))));
     }
 
     @Test
     public void testGetMutualFriends() throws NotFoundException {
-        Collection<User> mutualFriends = storage.getMutualFriend(1, 2);
+        User user1 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        User user2 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        User user3 = User.builder()
+                .email("e@mail.e")
+                .login("login")
+                .name("name")
+                .birthday(LocalDate.now())
+                .friends(new HashMap<>())
+                .build();
+        storage.addUser(user1);
+        storage.addUser(user2);
+        storage.addUser(user3);
+        storage.addFriend(user3, user1, false);
+        storage.addFriend(user3, user2, false);
+        storage.addFriend(user1, user3, true);
+        storage.addFriend(user2, user3, true);
+
+        Collection<User> mutualFriends = storage.getMutualFriend(user1.getId(), user2.getId());
 
         Assertions.assertNotNull(mutualFriends);
-        Assertions.assertTrue(mutualFriends.contains(storage.getUser(3)));
+        Assertions.assertTrue(mutualFriends.contains(storage.getUser(user3.getId())));
     }
 
     @Test

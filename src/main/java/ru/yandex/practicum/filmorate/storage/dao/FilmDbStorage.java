@@ -107,7 +107,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "   JOIN liked_user ls on ls.film_id = f.id " +
             "GROUP BY id, name, description, release_date, duration, rating_id " +
             "ORDER BY COUNT(ls.user_id)";
-    private static final String SEARCH_BY_TITLE_QUERY = "SELECT * FROM films WHERE POSITION (?, name) <> 0";
+    private static final String SEARCH_BY_TITLE_QUERY = "SELECT * FROM films " +
+            "WHERE POSITION (LOWER(?), LOWER(name)) <> 0";
     private static final String SEARCH_BY_DIRECTOR_QUERY = "SELECT f.id, " +
             "f.name, " +
             "f.description, " +
@@ -121,7 +122,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 "WHERE director_id IN (" +
                     "SELECT id " +
                     "FROM directors " +
-                    "WHERE POSITION (?, name) <> 0" +
+                    "WHERE POSITION (LOWER(?), LOWER(name)) <> 0" +
                 ")" +
             ")";
     private final ReviewDbStorage reviewDbStorage;
@@ -212,31 +213,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         film.setId(id);
 
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            StringBuilder addGenreQuery = new StringBuilder();
-            StringBuilder containsGenreQuery = new StringBuilder();
-            for (Genre genre : film.getGenres()) {
-                containsGenreQuery.append("SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ")
-                        .append(genre.getId())
-                        .append(") AS b;");
-                addGenreQuery.append("INSERT INTO film_genre (film_id, genre_id) VALUES (")
-                        .append(film.getId())
-                        .append(", ")
-                        .append(genre.getId())
-                        .append(");");
-            }
-            List<Boolean> contained = jdbc.queryForList(containsGenreQuery.toString(), Boolean.class);
-            if (contained.contains(false)) {
-                log.warn("Не удалось добавить фильм {}", film.getId());
-                throw new CorruptedDataException("Жанры не найден");
-            }
-            update(addGenreQuery.toString());
-        }
+        addGenreToFilm(film);
         return id;
     }
 
     @Override
-    public void updateFilm(Film film) {
+    public void updateFilm(Film film) throws CorruptedDataException {
         update(UPDATE_FILM_QUERY,
                 film.getName(),
                 film.getDescription(),
@@ -244,6 +226,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getDuration(),
                 film.getRating().getId(),
                 film.getId());
+
+        if (film.getGenres() != null && film.getGenres().isEmpty()) {
+            delete(DELETE_FROM_GENRE_QUERY, film.getId());
+        } else {
+            LinkedHashSet<Integer> genresIdsByFilmId = genreStorage.findGenresIdsByFilmId(film.getId());
+            film.setGenres(film.getGenres().stream()
+                    .filter(d -> !genresIdsByFilmId.contains(d.getId()))
+                    .collect(Collectors.toSet()));
+            addGenreToFilm(film);
+        }
     }
 
     @Override
@@ -253,6 +245,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         delete(DELETE_FROM_LIKED_USER_QUERY, id);
         delete(DELETE_FROM_GENRE_QUERY, id);
         delete(DELETE_QUERY, id);
+    }
+
+    @Override
+    public void deleteDirectorsId(int filmId) {
+        delete(DELETE_FROM_FILMS_DIRECTORS_QUERY, filmId);
     }
 
     @Override
@@ -519,5 +516,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 throw new RuntimeException(e);
             }
         }).collect(Collectors.toList());
+    }
+
+    private void addGenreToFilm(Film film) throws CorruptedDataException {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            StringBuilder addGenreQuery = new StringBuilder();
+            StringBuilder containsGenreQuery = new StringBuilder();
+            for (Genre genre : film.getGenres()) {
+                containsGenreQuery.append("SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ")
+                        .append(genre.getId())
+                        .append(") AS b;");
+                addGenreQuery.append("INSERT INTO film_genre (film_id, genre_id) VALUES (")
+                        .append(film.getId())
+                        .append(", ")
+                        .append(genre.getId())
+                        .append(");");
+            }
+            List<Boolean> contained = jdbc.queryForList(containsGenreQuery.toString(), Boolean.class);
+            if (contained.contains(false)) {
+                log.warn("Не удалось добавить фильм {}", film.getId());
+                throw new CorruptedDataException("Жанры не найден");
+            }
+            update(addGenreQuery.toString());
+        }
     }
 }

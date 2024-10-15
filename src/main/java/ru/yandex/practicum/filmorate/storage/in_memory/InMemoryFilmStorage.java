@@ -288,4 +288,9 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .sorted(Comparator.comparingInt(i -> -1 * i.getLikesNumber()))
                 .toList();
     }
+
+    @Override
+    public void deleteDirectorsId(int filmId) {
+
+    }
 }

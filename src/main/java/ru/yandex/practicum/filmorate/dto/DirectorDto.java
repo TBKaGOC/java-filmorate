@@ -1,9 +1,10 @@
 package ru.yandex.practicum.filmorate.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class DirectorDto {
     private Integer id;
-    private String name;
+    @NotBlank private String name;
 }
