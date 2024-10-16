@@ -29,5 +29,5 @@ public interface UserStorage {
 
     boolean contains(Integer id);
 
-    Collection<Feed> getFeeds(int userId, String count);
+    Collection<Feed> getFeeds(int userId);
 }

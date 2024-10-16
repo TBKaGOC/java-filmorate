@@ -174,8 +174,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public Collection<Feed> getFeeds(int userId, String count) {
-        var limit = Integer.parseInt(count);
-        return feedDbStorage.getFeedByUserId(userId, limit);
+    public Collection<Feed> getFeeds(int userId) {
+        return feedDbStorage.getFeedByUserId(userId);
     }
 }

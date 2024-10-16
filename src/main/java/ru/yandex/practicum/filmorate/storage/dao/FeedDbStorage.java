@@ -40,7 +40,7 @@ public class FeedDbStorage extends BaseDbStorage<Feed> {
         super(jdbc, mapper);
     }
 
-    public Collection<Feed> getFeedByUserId(int userId, int limit) {
+    public Collection<Feed> getFeedByUserId(int userId) {
         return findMany(FIND_BY_USERID_QUERY, userId);
     }
 

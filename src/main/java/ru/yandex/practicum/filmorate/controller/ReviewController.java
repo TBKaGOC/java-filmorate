@@ -17,11 +17,6 @@ import java.util.Collection;
 public class ReviewController {
     private final ReviewService service;
 
-//    @GetMapping
-//    public Collection<ReviewDto> getReviews() throws NotFoundException {
-//        return service.getReviews();
-//    }
-
     @GetMapping("/{id}")
     public ReviewDto getReview(@PathVariable int id) throws NotFoundException {
         return service.getReview(id);
@@ -29,7 +24,7 @@ public class ReviewController {
 
     @GetMapping
     public Collection<ReviewDto> getMostPopular(
-            @RequestParam int filmId,
+            @RequestParam(required = false) Integer filmId,
             @RequestParam(required = false, defaultValue = "10") int count) {
         return service.getMostPopular(filmId, count);
     }
