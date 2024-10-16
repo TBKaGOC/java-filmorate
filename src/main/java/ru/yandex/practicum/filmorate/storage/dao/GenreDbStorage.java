@@ -18,6 +18,7 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ?) AS b";
 
     private static final String FIND_GENRE_ID_QUERY = "SELECT genre_id FROM film_genre WHERE film_id = ?";
+    private static final String DELETE_BY_FILMID_GENREID = "DELETE film_genre WHERE film_id = ? and genre_id = ?";
 
     public GenreDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
@@ -45,4 +46,7 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
                 (rs, rowNum) -> rs.getInt("genre_id"), filmId));
     }
 
+    public void deleteGenreByFilmIdAndGenreId(int filmId, int genreId) {
+        update(DELETE_BY_FILMID_GENREID, filmId, genreId);
+    }
 }

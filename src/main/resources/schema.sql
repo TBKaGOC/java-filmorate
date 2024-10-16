@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS directors (
 );
 
 CREATE TABLE IF NOT EXISTS films_directors (
-    film_id INTEGER NOT NULL,
-    director_id INTEGER NOT NULL,
+    film_id INTEGER REFERENCES films (id),
+    director_id INTEGER REFERENCES directors (id),
     PRIMARY KEY (film_id, director_id)
 );

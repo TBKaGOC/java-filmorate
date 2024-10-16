@@ -41,70 +41,35 @@ public class FilmService {
         return mapper.mapToFilmDto(storage.getFilm(id));
     }
 
-    public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException {
+    public void addFilm(FilmDto film) throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         int id = storage.addFilm(mapper.mapToFilm(film));
+
         log.info("Успешно добавлен новый фильм {}", id);
         film.setId(id);
-        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
-            film.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors()));
-        }
     }
 
-    public FilmDto updateFilm(FilmDto film) throws NotFoundException, CorruptedDataException {
-        if (storage.contains(film.getId())) {
-            Film oldFilm = storage.getFilm(film.getId());
-            if (film.getName() != null) {
-                oldFilm.setName(film.getName());
-            }
-            if (film.getDescription() != null) {
-                oldFilm.setDescription(film.getDescription());
-            }
-            if (film.getReleaseDate() != null) {
-                if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-                    log.warn("Не удалось обновить фильм {}", film.getId());
-                    throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
-                }
-                oldFilm.setReleaseDate(film.getReleaseDate());
-            }
-            if (film.getDuration() != null) {
-                oldFilm.setDuration(film.getDuration());
-            }
-            if (film.getMpa() != null) {
-                oldFilm.setRating(film.getMpa());
-            }
-            if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
-                LinkedHashSet<Integer> directors = directorStorage.findDirectorsIdsByFilmId(film.getId());
-                oldFilm.setDirectors(addDirectorsToFilm(film.getId(), film.getDirectors().stream()
-                        .filter(d -> !directors.contains(d.getId()))
-                        .collect(Collectors.toSet())
-                ));
-            } else {
-                storage.deleteDirectorsId(film.getId());
-            }
-            if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-                oldFilm.setGenres(film.getGenres());
-            }
-            storage.updateFilm(oldFilm);
-            log.info("Успешно обновлён фильм {}", film.getId());
-            return mapper.mapToFilmDto(oldFilm);
+    public FilmDto updateFilm(FilmDto film) throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+        var id = film.getId();
+
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
+            log.warn("Не удалось обновить фильм {}", id);
+
+            throw new CorruptedDataException("Фильм не может выйти раньше " + Film.EARLY_DATE);
+        }
+
+        if (storage.contains(id)) {
+            storage.updateFilm(mapper.mapToFilm(film));
+
+            var updatedFilm = storage.getFilm(id);
+
+            log.info("Успешно обновлён фильм {}", id);
+
+            return mapper.mapToFilmDto(updatedFilm);
         } else {
             log.warn("Не удалось обновить фильм {}", film.getId());
+
             throw new NotFoundException("Фильм " + film.getId() + " не найден");
         }
-    }
-
-    private LinkedHashSet<Director> addDirectorsToFilm(int filmId, Set<Director> inputDirectors)
-            throws NotFoundException {
-        LinkedHashSet<Director> directors = new LinkedHashSet<>();
-        for (Director director : inputDirectors) {
-            Director directorStorageDirector = directorStorage.findDirector(director);
-            try {
-                storage.addDirectorId(filmId, director.getId());
-                directors.add(directorStorageDirector);
-            } catch (DuplicatedDataException ignored) {
-            }
-        }
-        return directors;
     }
 
     public void addLike(int likedUser, int film) throws NotFoundException {

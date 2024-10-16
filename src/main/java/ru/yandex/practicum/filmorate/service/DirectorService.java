@@ -60,7 +60,9 @@ public class DirectorService {
 
     public boolean delete(int directorId) throws NotFoundException {
         Director director = directorStorage.findDirector(directorId);
+
         log.debug(String.format("Удаляем данные режиссера %s", director.getName()));
+
         return directorStorage.delete(directorId);
     }
 }

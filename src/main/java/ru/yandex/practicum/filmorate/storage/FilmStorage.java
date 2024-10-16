@@ -17,9 +17,9 @@ public interface FilmStorage {
 
     List<Film> getMostPopular(int count, Integer genreId, Integer year);
 
-    Integer addFilm(Film film) throws CorruptedDataException, NotFoundException;
+    Integer addFilm(Film film) throws CorruptedDataException, NotFoundException, DuplicatedDataException;
 
-    void updateFilm(Film film) throws CorruptedDataException;
+    void updateFilm(Film film) throws CorruptedDataException, DuplicatedDataException;
 
     void deleteFilm(Integer id);
 
