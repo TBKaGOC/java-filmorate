@@ -166,7 +166,7 @@ public class UserService {
 
     public Collection<FeedDto> getFeeds(int userId) {
         log.trace(String.format("Request to get feeds userId %s ", userId));
-
+        getUser(userId);//for check if exist
         var resultDTO = storage.getFeeds(userId);
 
         var result = resultDTO
