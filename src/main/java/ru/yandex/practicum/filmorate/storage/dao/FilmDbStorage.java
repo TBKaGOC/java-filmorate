@@ -364,8 +364,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Review> getReviews() {
-        return reviewDbStorage.getReviews();
+    public List<Review> getReviews(int limit) {
+        return reviewDbStorage.getReviews(limit);
     }
 
     @Override

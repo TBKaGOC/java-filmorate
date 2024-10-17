@@ -200,8 +200,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public List<Review> getReviews() {
-        return reviews.values().stream().toList();
+    public List<Review> getReviews(int limit) {
+        return reviews.values().stream().limit(limit).toList();
     }
 
     @Override

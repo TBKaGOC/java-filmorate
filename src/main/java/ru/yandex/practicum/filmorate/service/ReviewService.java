@@ -29,7 +29,7 @@ public class ReviewService {
 
     public Collection<ReviewDto> getMostPopular(Integer filmId, int count) {
         if (filmId == null) {
-            return storage.getReviews()
+            return storage.getReviews(count)
                     .stream()
                     .limit(count)
                     .map(reviewMapper::mapToReviewDto)
@@ -90,7 +90,7 @@ public class ReviewService {
 
         var result = reviewMapper.mapToReviewDto(storage.getReview(id));
 
-        log.trace(String.format("Success to update review \"%s\"", reviewDto));
+        log.trace(String.format("Success to update review \"%s\"", result));
 
         return result;
     }

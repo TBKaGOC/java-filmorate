@@ -47,7 +47,7 @@ public interface FilmStorage {
 
     void deleteReviewLike(int reviewId, int userid);
 
-    List<Review> getReviews();
+    List<Review> getReviews(int limit);
 
     void updateReviewLike(int reviewId, int userid, int useful);
 
