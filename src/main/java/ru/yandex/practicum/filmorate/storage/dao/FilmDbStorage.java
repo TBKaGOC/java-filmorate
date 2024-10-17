@@ -202,26 +202,43 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }).collect(Collectors.toList());
     }
 
-    @Override
-    public Integer addFilm(Film film) throws CorruptedDataException, DuplicatedDataException {
+    private void checkFilmAttributes(Film film) throws CorruptedDataException {
         if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-            log.warn("Не удалось добавить новый фильм");
-            throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
+            log.warn("Не удалось применить фильм {}.", film);
+            throw new CorruptedDataException("Фильм не может выйти раньше " + Film.EARLY_DATE);
         }
 
         int ratingId = film.getRating().getId();
 
         if (!ratingStorage.contains(ratingId)) {
-            log.warn("Не удалось добавить фильм {}", film.getId());
+            log.warn("Не удалось применить фильм {}", film);
             throw new CorruptedDataException("Рейтинг " + ratingId + " не найден");
         }
+
+        var genres = film.getGenres();
+
+        if (genres != null) {
+            for (var genre: genres) {
+               var genreId = genre.getId();
+
+               if (!genreStorage.contains(genreId)) {
+                   log.warn("Не удалось применить фильм {}", film);
+                   throw new CorruptedDataException("Жанр " + genreId + " не найден");
+               }
+            }
+        }
+    }
+
+    @Override
+    public Integer addFilm(Film film) throws CorruptedDataException, DuplicatedDataException {
+        checkFilmAttributes(film);
 
         int id = (int) insert(ADD_QUERY,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
-                ratingId);
+                film.getRating().getId());
 
         film.setId(id);
 
@@ -233,6 +250,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public void updateFilm(Film film) throws CorruptedDataException, DuplicatedDataException {
+        checkFilmAttributes(film);
+
         update(UPDATE_FILM_QUERY,
                 film.getName(),
                 film.getDescription(),
