@@ -4,23 +4,29 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.in_memory.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.util.*;
 
 public class FilmStorageTests {
     private FilmStorage filmStorage;
+    private UserStorage userStorage;
 
     @BeforeEach
     public void createNewFilmController() {
         filmStorage = new InMemoryFilmStorage();
+        userStorage = new InMemoryUserStorage();
     }
 
     @Test
-    public void shouldWeGetAllFilms() throws CorruptedDataException, NotFoundException {
+    public void shouldWeGetAllFilms() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Collection<Film> filmCollection = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -39,7 +45,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeCreateNewFilm() throws CorruptedDataException, NotFoundException {
+    public void shouldWeCreateNewFilm() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Film newFilm = Film.builder()
                 .name("name")
                 .description("description")
@@ -65,7 +71,46 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetMostPopularFilms() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetMostPopularFilmsWithGenre() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+        Set<Genre> genres = new HashSet<>();
+        Genre genre = Genre
+                .builder()
+                .id(1)
+                .name("Комедия")
+                .build();
+        genres.add(genre);
+
+        for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .genres(genres)
+                    .likedUsers(likedUser)
+                    .build();
+            filmStorage.addFilm(film);
+        }
+
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
+
+        Assertions.assertEquals(filmStorage.getMostPopular(5, genre.getId(), null), films);
+    }
+
+    @Test
+    public void shouldWeGetMostPopularFilmsWithYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -91,12 +136,52 @@ public class FilmStorageTests {
                 filmStorage.getFilm(1)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("5"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(5, null, LocalDate.now().getYear()), films);
+    }
+
+    @Test
+    public void shouldWeGetMostPopularFilmsWithGenreAndYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+        Set<Genre> genres = new HashSet<>();
+
+        Genre genre = Genre
+                .builder()
+                .id(1)
+                .name("Комедия")
+                .build();
+        genres.add(genre);
+
+        for (int i = 0; i < 5; i++) {
+            Set<Integer> likedUser = new HashSet<>();
+
+            for (int j = 0; j < i; j++) {
+                likedUser.add(j);
+            }
+
+            Film film = Film.builder()
+                    .duration(1)
+                    .releaseDate(LocalDate.now())
+                    .description("description")
+                    .name("film")
+                    .genres(genres)
+                    .likedUsers(likedUser)
+                    .build();
+            filmStorage.addFilm(film);
+        }
+
+        List<Film> films = List.of(
+                filmStorage.getFilm(5),
+                filmStorage.getFilm(4),
+                filmStorage.getFilm(3),
+                filmStorage.getFilm(2),
+                filmStorage.getFilm(1)
+        );
+
+        Assertions.assertEquals(filmStorage.getMostPopular(5, genre.getId(), LocalDate.now().getYear()), films);
     }
 
     @Test
     public void shouldWeGetMostPopularFilmsWithATopSizeLargerThanTheList() throws NotFoundException,
-            CorruptedDataException {
+            CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -122,12 +207,12 @@ public class FilmStorageTests {
                 filmStorage.getFilm(1)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("10"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(10, null, null), films);
     }
 
     @Test
     public void shouldWeGetMostPopularFilmsWithATopSizeSmallerThanTheList() throws NotFoundException,
-            CorruptedDataException {
+            CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -151,6 +236,40 @@ public class FilmStorageTests {
                 filmStorage.getFilm(3)
         );
 
-        Assertions.assertEquals(filmStorage.getMostPopular("3"), films);
+        Assertions.assertEquals(filmStorage.getMostPopular(3, null, null), films);
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilms() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        userStorage.addUser(newUser);
+
+        Film film = Film.builder()
+                .duration(1)
+                .releaseDate(LocalDate.now())
+                .description("description")
+                .name("film")
+                .build();
+        filmStorage.addFilm(film);
+        filmStorage.addLike(newUser.getId(), film.getId());
+
+        Assertions.assertEquals(filmStorage.getUsersLikedFilms(newUser.getId()), List.of(film));
+    }
+
+    @Test
+    public void shouldWeGetUsersLikedFilmsWithoutLikes() throws NotFoundException, DuplicatedDataException {
+        User newUser = User.builder()
+                .login("login")
+                .name("name")
+                .email("rightemail@email.right")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        userStorage.addUser(newUser);
+        Assertions.assertEquals(filmStorage.getUsersLikedFilms(newUser.getId()), List.of());
     }
 }

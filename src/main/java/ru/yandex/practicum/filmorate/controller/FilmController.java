@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -27,18 +28,20 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<FilmDto> getMostPopular(@RequestParam(required = false, defaultValue = "10") String count) {
-        return service.getMostPopular(count);
+    public Collection<FilmDto> getMostPopular(@RequestParam(required = false, defaultValue = "10") int count,
+                                              @RequestParam(required = false) Integer genreId,
+                                              @RequestParam(required = false) Integer year) {
+        return service.getMostPopular(count, genreId, year);
     }
 
     @PostMapping
-    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException {
+    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         service.addFilm(film);
         return service.getFilm(film.getId());
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException, CorruptedDataException {
+    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         return service.updateFilm(film);
     }
 
@@ -48,8 +51,32 @@ public class FilmController {
         return service.getFilm(filmId);
     }
 
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable int filmId) {
+        service.deleteFilm(filmId);
+    }
+
     @DeleteMapping("/{film_id}/like/{id}")
     public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
+    }
+
+    @GetMapping("/common")
+    public Collection<FilmDto> getCommonFilms(
+            @RequestParam int userId,
+            @RequestParam int friendId) {
+        return service.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> findDirectorFilms(@PathVariable("directorId") int directorId,
+                                                 @RequestParam(name = "sortBy", defaultValue = "")
+                                                 String sortConditions) throws NotFoundException {
+        return service.findDirectorFilms(directorId, sortConditions);
+    }
+
+    @GetMapping("/search")
+    public Collection<FilmDto> search(@RequestParam String query, @RequestParam String by) throws NotFoundException {
+        return service.search(query, by);
     }
 }

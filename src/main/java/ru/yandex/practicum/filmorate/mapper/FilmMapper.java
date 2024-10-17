@@ -16,6 +16,7 @@ public class FilmMapper {
                 .likedUsers(film.getLikedUsers())
                 .genres(film.getGenres())
                 .mpa(film.getRating())
+                .directors(film.getDirectors())
                 .build();
     }
 
@@ -29,6 +30,7 @@ public class FilmMapper {
                 .likedUsers(film.getLikedUsers())
                 .genres(film.getGenres())
                 .rating(film.getMpa())
+                .directors(film.getDirectors())
                 .build();
     }
 }
