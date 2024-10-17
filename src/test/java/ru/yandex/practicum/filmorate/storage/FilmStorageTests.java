@@ -26,7 +26,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetAllFilms() throws CorruptedDataException, NotFoundException {
+    public void shouldWeGetAllFilms() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Collection<Film> filmCollection = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
@@ -45,7 +45,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeCreateNewFilm() throws CorruptedDataException, NotFoundException {
+    public void shouldWeCreateNewFilm() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Film newFilm = Film.builder()
                 .name("name")
                 .description("description")
@@ -71,7 +71,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetMostPopularFilmsWithGenre() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetMostPopularFilmsWithGenre() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Set<Genre> genres = new HashSet<>();
         Genre genre = Genre
                 .builder()
@@ -110,7 +110,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetMostPopularFilmsWithYear() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetMostPopularFilmsWithYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -140,7 +140,7 @@ public class FilmStorageTests {
     }
 
     @Test
-    public void shouldWeGetMostPopularFilmsWithGenreAndYear() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetMostPopularFilmsWithGenreAndYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Set<Genre> genres = new HashSet<>();
 
         Genre genre = Genre
@@ -181,7 +181,7 @@ public class FilmStorageTests {
 
     @Test
     public void shouldWeGetMostPopularFilmsWithATopSizeLargerThanTheList() throws NotFoundException,
-            CorruptedDataException {
+            CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 
@@ -212,7 +212,7 @@ public class FilmStorageTests {
 
     @Test
     public void shouldWeGetMostPopularFilmsWithATopSizeSmallerThanTheList() throws NotFoundException,
-            CorruptedDataException {
+            CorruptedDataException, DuplicatedDataException {
         for (int i = 0; i < 5; i++) {
             Set<Integer> likedUser = new HashSet<>();
 

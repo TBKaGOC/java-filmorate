@@ -4,9 +4,9 @@ package ru.yandex.practicum.filmorate.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+@Data
 @Builder(toBuilder = true)
 public class ReviewDto {
     int reviewId;

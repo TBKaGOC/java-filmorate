@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -34,13 +35,13 @@ public class FilmController {
     }
 
     @PostMapping
-    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException {
+    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         service.addFilm(film);
         return service.getFilm(film.getId());
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException, CorruptedDataException {
+    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         return service.updateFilm(film);
     }
 

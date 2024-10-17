@@ -76,7 +76,7 @@ public class FilmServiceTests {
     }
 
     @Test
-    public void shouldWeUpdateFilm() throws CorruptedDataException, NotFoundException {
+    public void shouldWeUpdateFilm() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         FilmDto newFilm = FilmDto.builder()
                 .name("name")
                 .description("description")
@@ -99,7 +99,7 @@ public class FilmServiceTests {
     }
 
     @Test
-    public void shouldWeGetExceptionWhenUpdateLocalDateIsBeforeEarlyDate() throws CorruptedDataException, NotFoundException {
+    public void shouldWeGetExceptionWhenUpdateLocalDateIsBeforeEarlyDate() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         FilmDto newFilm = FilmDto.builder()
                 .name("name")
                 .description("description")
@@ -120,7 +120,7 @@ public class FilmServiceTests {
     }
 
     @Test
-    public void shouldWeGetExceptionWhenUpdateFilmWithNewId() throws CorruptedDataException, NotFoundException {
+    public void shouldWeGetExceptionWhenUpdateFilmWithNewId() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         FilmDto newFilm = FilmDto.builder()
                 .name("name")
                 .description("description")

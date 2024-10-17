@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -26,15 +27,14 @@ public class ReviewService {
         return reviewMapper.mapToReviewDto(storage.getReview(id));
     }
 
-    public Collection<ReviewDto> getReviews() throws NotFoundException {
-        return storage
-                .getReviews()
-                .stream()
-                .map(reviewMapper::mapToReviewDto)
-                .collect(Collectors.toList());
-    }
-
-    public Collection<ReviewDto> getMostPopular(int filmId, int count) {
+    public Collection<ReviewDto> getMostPopular(Integer filmId, int count) {
+        if (filmId == null) {
+            return storage.getReviews(count)
+                    .stream()
+                    .limit(count)
+                    .map(reviewMapper::mapToReviewDto)
+                    .collect(Collectors.toList());
+        }
         return storage
                 .getMostPopularReviews(filmId, count)
                 .stream()
@@ -78,16 +78,19 @@ public class ReviewService {
         log.trace(String.format("Request to update review \"%s\"", reviewDto));
 
         var id = reviewDto.getReviewId();
-        if (!storage.containsReview(id)) {
+        Review oldReview = storage.getReview(id);
+        if (oldReview == null) {
             log.warn("Не удалось найти отзыв {}", id);
             throw new NotFoundException(String.format("Отзыв \"%d\" не найден", id));
         }
+        reviewDto.setFilmId(oldReview.getFilmId());
+        reviewDto.setUserId(oldReview.getUserId());
 
         storage.updateReview(reviewMapper.mapToReview(reviewDto));
 
         var result = reviewMapper.mapToReviewDto(storage.getReview(id));
 
-        log.trace(String.format("Success to update review \"%s\"", reviewDto));
+        log.trace(String.format("Success to update review \"%s\"", result));
 
         return result;
     }

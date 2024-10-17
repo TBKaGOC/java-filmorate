@@ -14,61 +14,69 @@ import java.util.List;
 public class ReviewDbStorage extends BaseDbStorage<Review> {
     private static final String FIND_ALL_QUERY =
             "SELECT r.review_id, r.content, r.isPositive, r.film_id, r.user_id, sum(l.useful) useful " +
-            "FROM reviews r " +
-            "   left join reviewLikes l on l.review_id = r.review_id " +
-            "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id";
+                    "FROM reviews r " +
+                    "   left join reviewLikes l on l.review_id = r.review_id " +
+                    "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id " +
+                    "ORDER BY useful desc";
     private static final String FIND_BY_ID_QUERY =
             "SELECT r.review_id, r.content, r.isPositive, r.film_id, r.user_id, sum(l.useful) useful " +
-            "FROM reviews r " +
-            "   left join reviewLikes l on l.review_id = r.review_id " +
-            "WHERE r.review_id = ? " +
-            "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id";
+                    "FROM reviews r " +
+                    "   left join reviewLikes l on l.review_id = r.review_id " +
+                    "WHERE r.review_id = ? " +
+                    "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT 1 FROM reviews WHERE review_id = ?) AS b";
-    private static final String FIND_MOSTPOPULAR =
+    private static final String FIND_MOSTPOPULAR_BY_FILMID =
             "SELECT r.review_id, r.content, r.isPositive, r.film_id, r.user_id, sum(l.useful) useful " +
             "FROM reviews r " +
             "   left join reviewLikes l on l.review_id = r.review_id " +
             "WHERE r.film_id = ? " +
             "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id " +
-            "ORDER BY useful desc " +
+            "ORDER BY CASE WHEN useful IS NULL THEN 0 ELSE USEFUL end desc " +
+            "LIMIT ?";
+    private static final String FIND_MOSTPOPULAR =
+            "SELECT r.review_id, r.content, r.isPositive, r.film_id, r.user_id, sum(l.useful) useful " +
+            "FROM reviews r " +
+            "   left join reviewLikes l on l.review_id = r.review_id " +
+            "GROUP BY r.review_id, r.content, r.isPositive, r.film_id, r.user_id " +
+            "ORDER BY CASE WHEN useful IS NULL THEN 0 ELSE USEFUL end desc " +
             "LIMIT ?";
     private static final String ADD_QUERY =
             "INSERT INTO reviews (content, isPositive, film_id, user_id) " +
-            "values(?, ?, ?, ?)";
+                    "values(?, ?, ?, ?)";
     private static final String UPDATE_QUERY =
             "UPDATE reviews set content = ?, isPositive = ?, film_id = ?, user_id = ? " +
-            "where review_id = ?";
+                    "where review_id = ?";
     private static final String DELETE_REVIEW =
             "DELETE reviews " +
-            "where review_id = ?";
+                    "where review_id = ?";
     private static final String DELETE_LIKE =
             "DELETE reviewLikes " +
-            "where review_id = ? and user_id = ?";
+                    "where review_id = ? and user_id = ?";
     private static final String ADD_LIKE =
             "INSERT INTO reviewLikes (review_id, user_id, useful) " +
-            "values(?, ?, ?)";
+                    "values(?, ?, ?)";
     private static final String UPDATE_LIKE =
             "UPDATE reviewLikes set useful = ? " +
-            "where review_id = ? and user_id = ?";
+                    "where review_id = ? and user_id = ?";
     private static final String CONTAINS_LIKE_QUERY =
             "SELECT EXISTS(SELECT 1 FROM reviewLikes WHERE review_id = ? and user_id = ?) AS b";
     private static final String DELETE_REVIEWS_BY_FILMID =
             "set @filmId = ? " +
-            "DELETE reviewLikes " +
-            "WHERE exists(select 1 " +
-            "             FROM reviews " +
-            "             WHERE film_id = @filmId) " +
-            "DELETE reviews " +
-            "WHERE film_id = @filmId";
+                    "DELETE reviewLikes " +
+                    "WHERE exists(select 1 " +
+                    "             FROM reviews " +
+                    "             WHERE film_id = @filmId) " +
+                    "DELETE reviews " +
+                    "WHERE film_id = @filmId";
 
 
     public ReviewDbStorage(JdbcTemplate jdbc, ReviewRowMapper mapper) {
         super(jdbc, mapper);
     }
 
-    public List<Review> getReviews() {
-        return findMany(FIND_ALL_QUERY);
+    public List<Review> getReviews(int limit) {
+        return findMany(FIND_MOSTPOPULAR, limit);
     }
 
     public Review getReview(Integer id) throws NotFoundException {
@@ -85,7 +93,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> {
     }
 
     public List<Review> getMostPopularReviews(int filmId, int count) {
-        var result = findMany(FIND_MOSTPOPULAR, filmId, count);
+        var result = findMany(FIND_MOSTPOPULAR_BY_FILMID, filmId, count);
         return result;
     }
 

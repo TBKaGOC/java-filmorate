@@ -23,6 +23,8 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
     private static final String UPDATE = "UPDATE directors SET name = ? WHERE id = ?";
     private static final String DELETE = "DELETE FROM directors WHERE id = ?";
     private static final String FIND_DIRECTOR_ID_QUERY = "SELECT director_id FROM films_directors WHERE film_id = ?";
+    private static final String DELETE_FILMSDIRECTORS_BY_FILMID_DIRECTORID = "DELETE films_directors WHERE film_id = ? and director_id = ?";
+    private static final String DELETE_FILMSDIRECTORS_BY_DIRECTORID = "DELETE films_directors WHERE director_id = ?";
 
     public DirectorDbStorage(JdbcTemplate jdbc, RowMapper<Director> mapper) {
         super(jdbc, mapper);
@@ -58,6 +60,8 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
     }
 
     public boolean delete(int directorId) {
+        deleteFilmDirectorByDirectorId(directorId);
+
         return delete(DELETE, directorId);
     }
 
@@ -66,4 +70,11 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
                 (rs, rowNum) -> rs.getInt("director_id"), filmId));
     }
 
+    public void deleteFilmDirector(int filmId, int directorId) {
+        update(DELETE_FILMSDIRECTORS_BY_FILMID_DIRECTORID, filmId, directorId);
+    }
+
+    public void deleteFilmDirectorByDirectorId(int directorId) {
+        update(DELETE_FILMSDIRECTORS_BY_DIRECTORID, directorId);
+    }
 }

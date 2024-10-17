@@ -115,12 +115,10 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Collection<Feed> getFeeds(int userId, String count) {
-        var limit = Integer.parseInt(count);
+    public Collection<Feed> getFeeds(int userId) {
         return feeds.get(userId)
                 .stream()
                 .sorted(Comparator.comparingLong(i -> -1 * i.getTimestamp()))
-                .limit(limit)
                 .toList();
     }
 

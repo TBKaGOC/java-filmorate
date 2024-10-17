@@ -42,10 +42,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/feed")
-    public Collection<FeedDto> getFeeds(
-            @PathVariable int id,
-            @RequestParam(required = false, defaultValue = "10") String count) {
-        return service.getFeeds(id, count);
+    public Collection<FeedDto> getFeeds(@PathVariable int id) {
+        return service.getFeeds(id);
     }
 
     @GetMapping("/{id}/recommendations")

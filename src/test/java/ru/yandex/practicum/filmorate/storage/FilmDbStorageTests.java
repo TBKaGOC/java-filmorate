@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
 import ru.yandex.practicum.filmorate.exception.CorruptedDataException;
+import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -28,7 +29,7 @@ public class FilmDbStorageTests {
     private final UserDbStorage userStorage;
 
     @Test
-    public void testGetAllFilms() throws NotFoundException, CorruptedDataException {
+    public void testGetAllFilms() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -55,7 +56,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testGetFilm() throws NotFoundException, CorruptedDataException {
+    public void testGetFilm() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -73,7 +74,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testGetMostPopular() throws NotFoundException, CorruptedDataException {
+    public void testGetMostPopular() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -91,7 +92,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testGetMostPopularWithGenre() throws NotFoundException, CorruptedDataException {
+    public void testGetMostPopularWithGenre() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -109,7 +110,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testGetMostPopularWithYear() throws NotFoundException, CorruptedDataException {
+    public void testGetMostPopularWithYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -127,7 +128,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testGetMostPopularWithGenreAndYear() throws NotFoundException, CorruptedDataException {
+    public void testGetMostPopularWithGenreAndYear() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -145,7 +146,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testAddFilm() throws CorruptedDataException {
+    public void testAddFilm() throws CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -162,7 +163,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testAddLike() throws CorruptedDataException, NotFoundException {
+    public void testAddLike() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -189,7 +190,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testUpdateFilm() throws CorruptedDataException, NotFoundException {
+    public void testUpdateFilm() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -223,7 +224,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testDeleteFilm() throws CorruptedDataException {
+    public void testDeleteFilm() throws CorruptedDataException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -244,7 +245,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void testDeleteLike() throws CorruptedDataException, NotFoundException {
+    public void testDeleteLike() throws CorruptedDataException, NotFoundException, DuplicatedDataException {
         Film film = Film.builder()
                 .name("name")
                 .description("desc")
@@ -276,7 +277,7 @@ public class FilmDbStorageTests {
     }
 
     @Test
-    public void shouldWeGetUsersLikedFilms() throws NotFoundException, CorruptedDataException {
+    public void shouldWeGetUsersLikedFilms() throws NotFoundException, CorruptedDataException, DuplicatedDataException {
         User newUser = User.builder()
                 .login("login")
                 .name("name")

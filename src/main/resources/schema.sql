@@ -45,8 +45,7 @@ CREATE TABLE IF NOT EXISTS friends (
 
 CREATE TABLE IF NOT EXISTS liked_user (
     film_id INTEGER REFERENCES films (id),
-    user_id INTEGER REFERENCES users (id),
-    PRIMARY KEY(film_id, user_id)
+    user_id INTEGER REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS film_genre (
@@ -65,7 +64,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 CREATE TABLE IF NOT EXISTS reviewLikes (
-    review_id INTEGER REFERENCES reviews (review_id),
+    review_id INTEGER REFERENCES reviews (review_id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users (id),
     useful INTEGER,
     PRIMARY KEY(review_id, user_id)
@@ -77,7 +76,7 @@ CREATE TABLE IF NOT EXISTS directors (
 );
 
 CREATE TABLE IF NOT EXISTS films_directors (
-    film_id INTEGER NOT NULL,
-    director_id INTEGER NOT NULL,
+    film_id INTEGER REFERENCES films (id),
+    director_id INTEGER REFERENCES directors (id),
     PRIMARY KEY (film_id, director_id)
 );

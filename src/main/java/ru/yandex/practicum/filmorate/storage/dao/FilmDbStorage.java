@@ -59,39 +59,48 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE film_id = ? AND user_id = ?";
     private static final String CONTAINS_QUERY =
             "SELECT EXISTS(SELECT id FROM films WHERE id = ?) AS b";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY = "SELECT f.id, " +
-            "f.name, " +
-            "f.description, " +
-            "f.release_date, " +
-            "f.duration, " +
-            "f.rating_id " +
+    private static final String FIND_DIRECTOR_FILMS_ORDER_YEAR_QUERY =
+            "SELECT f.id, " +
+            "   f.name, " +
+            "   f.description, " +
+            "   f.release_date, " +
+            "   f.duration, " +
+            "   f.rating_id " +
             "FROM films AS f " +
-            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
+            "  JOIN films_directors AS fd ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? " +
             "ORDER BY f.release_date";
-    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY = "SELECT f.id, " +
-            "f.name, " +
-            "f.description, " +
-            "f.release_date, " +
-            "f.duration, " +
-            "f.rating_id " +
+    private static final String FIND_DIRECTOR_FILMS_ORDER_LIKES_QUERY =
+            "SELECT f.id, " +
+            "   f.name, " +
+            "   f.description, " +
+            "   f.release_date, " +
+            "   f.duration, " +
+            "   f.rating_id " +
             "FROM films AS f " +
-            "LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
-            "LEFT OUTER JOIN liked_user AS lu ON lu.film_id = f.id " +
+            "   LEFT OUTER JOIN films_directors AS fd ON fd.film_id = f.id " +
+            "   LEFT OUTER JOIN liked_user AS lu ON lu.film_id = f.id " +
             "WHERE fd.director_id = ? " +
             "GROUP BY f.id " +
             "ORDER BY COUNT(lu.user_id) DESC";
-    private static final String FIND_DIRECTOR_FILMS_QUERY = "SELECT f.* FROM films_directors AS fd " +
-            "LEFT JOIN films AS f ON fd.film_id = f.id " +
+    private static final String FIND_DIRECTOR_FILMS_QUERY =
+            "SELECT f.* " +
+            "FROM films_directors AS fd " +
+            "   JOIN films AS f ON fd.film_id = f.id " +
             "WHERE fd.director_id = ? ";
     private static final String FIND_LIKES_BY_ID_QUERY = "SELECT user_id FROM liked_user WHERE film_id = ?";
-    private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO films_directors(film_id, director_id)" +
+    private static final String INSERT_FILM_DIRECTOR_QUERY =
+            "INSERT INTO films_directors(film_id, director_id) " +
             "VALUES (?, ?)";
     private static final String DELETE_FROM_GENRE_QUERY = "DELETE FROM film_genre WHERE film_id = ?";
     private static final String DELETE_FROM_LIKED_USER_QUERY = "DELETE FROM liked_user WHERE film_id = ?";
     private static final String DELETE_FROM_FILMS_DIRECTORS_QUERY = "DELETE FROM films_directors WHERE film_id = ?";
     private static final String DELETE_FROM_REVIEWS_QUERY = "DELETE FROM reviews WHERE film_id = ?";
-    private static final String GET_USERS_FILMS_QUERY = "SELECT id, name, description, release_date, duration, rating_id FROM films AS f JOIN liked_user AS lu ON lu.film_id = f.id WHERE lu.user_id = ?";
+    private static final String GET_USERS_FILMS_QUERY =
+            "SELECT id, name, description, release_date, duration, rating_id " +
+            "FROM films AS f " +
+            "JOIN liked_user AS lu ON lu.film_id = f.id " +
+            "WHERE lu.user_id = ?";
     private static final String FIND_COMMON_FILMS =
             "SELECT id, name, description, release_date, duration, rating_id " +
             "FROM( " +
@@ -107,14 +116,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "   JOIN liked_user ls on ls.film_id = f.id " +
             "GROUP BY id, name, description, release_date, duration, rating_id " +
             "ORDER BY COUNT(ls.user_id)";
-    private static final String SEARCH_BY_TITLE_QUERY = "SELECT * FROM films " +
+    private static final String SEARCH_BY_TITLE_QUERY =
+            "SELECT * " +
+            "FROM films " +
             "WHERE POSITION (LOWER(?), LOWER(name)) <> 0";
-    private static final String SEARCH_BY_DIRECTOR_QUERY = "SELECT f.id, " +
-            "f.name, " +
-            "f.description, " +
-            "f.release_date, " +
-            "f.duration, " +
-            "f.rating_id " +
+    private static final String SEARCH_BY_DIRECTOR_QUERY =
+            "SELECT f.id, " +
+            "   f.name, " +
+            "   f.description, " +
+            "   f.release_date, " +
+            "   f.duration, " +
+            "   f.rating_id " +
             "FROM films AS f " +
             "WHERE f.id IN (" +
                 "SELECT film_id " +
@@ -123,8 +135,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     "SELECT id " +
                     "FROM directors " +
                     "WHERE POSITION (LOWER(?), LOWER(name)) <> 0" +
-                ")" +
-            ")";
+                    ")" +
+            "   )";
     private final ReviewDbStorage reviewDbStorage;
     private final FeedDbStorage feedDbStorage;
     private final DirectorDbStorage directorDbStorage;
@@ -190,35 +202,56 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }).collect(Collectors.toList());
     }
 
-    @Override
-    public Integer addFilm(Film film) throws CorruptedDataException {
+    private void checkFilmAttributes(Film film) throws CorruptedDataException {
         if (film.getReleaseDate().isBefore(Film.EARLY_DATE)) {
-            log.warn("Не удалось добавить новый фильм");
-            throw new CorruptedDataException("Фильм не может выйти раньше 28 декабря 1895 года");
+            log.warn("Не удалось применить фильм {}.", film);
+            throw new CorruptedDataException("Фильм не может выйти раньше " + Film.EARLY_DATE);
         }
 
         int ratingId = film.getRating().getId();
 
         if (!ratingStorage.contains(ratingId)) {
-            log.warn("Не удалось добавить фильм {}", film.getId());
+            log.warn("Не удалось применить фильм {}", film);
             throw new CorruptedDataException("Рейтинг " + ratingId + " не найден");
         }
+
+        var genres = film.getGenres();
+
+        if (genres != null) {
+            for (var genre: genres) {
+               var genreId = genre.getId();
+
+               if (!genreStorage.contains(genreId)) {
+                   log.warn("Не удалось применить фильм {}", film);
+                   throw new CorruptedDataException("Жанр " + genreId + " не найден");
+               }
+            }
+        }
+    }
+
+    @Override
+    public Integer addFilm(Film film) throws CorruptedDataException, DuplicatedDataException {
+        checkFilmAttributes(film);
 
         int id = (int) insert(ADD_QUERY,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
-                ratingId);
+                film.getRating().getId());
 
         film.setId(id);
 
-        addGenreToFilm(film);
+        updateGenresForFilm(film);
+        updateDirectorsForFilm(film);
+
         return id;
     }
 
     @Override
-    public void updateFilm(Film film) throws CorruptedDataException {
+    public void updateFilm(Film film) throws CorruptedDataException, DuplicatedDataException {
+        checkFilmAttributes(film);
+
         update(UPDATE_FILM_QUERY,
                 film.getName(),
                 film.getDescription(),
@@ -227,15 +260,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getRating().getId(),
                 film.getId());
 
-        if (film.getGenres() != null && film.getGenres().isEmpty()) {
-            delete(DELETE_FROM_GENRE_QUERY, film.getId());
-        } else {
-            LinkedHashSet<Integer> genresIdsByFilmId = genreStorage.findGenresIdsByFilmId(film.getId());
-            film.setGenres(film.getGenres().stream()
-                    .filter(d -> !genresIdsByFilmId.contains(d.getId()))
-                    .collect(Collectors.toSet()));
-            addGenreToFilm(film);
-        }
+        updateGenresForFilm(film);
+        updateDirectorsForFilm(film);
     }
 
     @Override
@@ -357,8 +383,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public List<Review> getReviews() {
-        return reviewDbStorage.getReviews();
+    public List<Review> getReviews(int limit) {
+        return reviewDbStorage.getReviews(limit);
     }
 
     @Override
@@ -408,6 +434,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public void addDirectorId(int filmId, int directorId) throws DuplicatedDataException {
         try {
+            log.trace("Для фильма {} добавляю режиссера {}", filmId, directorId);
+
             update(INSERT_FILM_DIRECTOR_QUERY, filmId, directorId);
         } catch (SQLWarningException e) {
             throw new DuplicatedDataException(String.format("Для фильма %s режиссер %s уже установлен. %s",
@@ -518,26 +546,69 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }).collect(Collectors.toList());
     }
 
-    private void addGenreToFilm(Film film) throws CorruptedDataException {
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            StringBuilder addGenreQuery = new StringBuilder();
-            StringBuilder containsGenreQuery = new StringBuilder();
-            for (Genre genre : film.getGenres()) {
-                containsGenreQuery.append("SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ")
-                        .append(genre.getId())
-                        .append(") AS b;");
-                addGenreQuery.append("INSERT INTO film_genre (film_id, genre_id) VALUES (")
-                        .append(film.getId())
-                        .append(", ")
-                        .append(genre.getId())
-                        .append(");");
+    private void updateDirectorsForFilm(Film film) throws DuplicatedDataException {
+        var filmId = film.getId();
+
+        var directors = film.getDirectors();
+
+        if (directors == null || directors.isEmpty()) {
+            update(DELETE_FROM_FILMS_DIRECTORS_QUERY, filmId);
+
+            log.trace("Очистил всех режиссеров для фильма {}", filmId);
+
+            return;
+        }
+
+        var curDirectors = directorDbStorage.findDirectorsIdsByFilmId(filmId);
+
+        for (var director: directors) {
+            var directorId = director.getId();
+
+            if (curDirectors.contains(directorId)) {
+                curDirectors.remove(directorId);
+            } else {
+                addDirectorId(filmId, directorId);
             }
-            List<Boolean> contained = jdbc.queryForList(containsGenreQuery.toString(), Boolean.class);
-            if (contained.contains(false)) {
-                log.warn("Не удалось добавить фильм {}", film.getId());
-                throw new CorruptedDataException("Жанры не найден");
+        }
+
+        for (var genreIdToRemove: curDirectors) {
+            directorDbStorage.deleteFilmDirector(filmId, genreIdToRemove);
+
+            log.trace("Для фильма {} удалил режиссера {}", filmId, genreIdToRemove);
+        }
+    }
+
+    private void updateGenresForFilm(Film film) throws CorruptedDataException {
+        var filmId = film.getId();
+
+        var genres = film.getGenres();
+
+        if (genres == null || genres.isEmpty()) {
+            update(DELETE_FROM_GENRE_QUERY, filmId);
+
+            log.trace("Очистил все жанры для фильма {}", filmId);
+
+            return;
+        }
+
+        var curGenres = genreStorage.findGenresIdsByFilmId(filmId);
+
+        for (var genre: genres) {
+            var genreId = genre.getId();
+
+            if (curGenres.contains(genreId)) {
+                curGenres.remove(genreId);
+            } else {
+                update("INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?);", filmId, genreId);
+
+                log.trace("Для фильма {} добавил жанр {}", filmId, genreId);
             }
-            update(addGenreQuery.toString());
+        }
+
+        for (var genreIdToRemove: curGenres) {
+            genreStorage.deleteGenreByFilmIdAndGenreId(filmId, genreIdToRemove);
+
+            log.trace("Для фильма {} удалил жанр {}", filmId, genreIdToRemove);
         }
     }
 }
