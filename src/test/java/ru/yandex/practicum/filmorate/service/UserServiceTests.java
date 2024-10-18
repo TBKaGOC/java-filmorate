@@ -10,11 +10,6 @@ import java.time.LocalDate;
 public class UserServiceTests {
     private UserService service;
 
-//    @BeforeEach
-//    public void createNewService() {
-//        service = new UserService(new InMemoryUserStorage(), new UserMapper());
-//    }
-
     //@Test
     public void shouldWeAddFriend() throws NotFoundException, DuplicatedDataException {
         UserDto user1 = UserDto.builder()

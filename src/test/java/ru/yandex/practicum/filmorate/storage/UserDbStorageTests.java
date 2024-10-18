@@ -142,7 +142,7 @@ public class UserDbStorageTests {
         Assertions.assertTrue(storage.contains(user.getId()));
     }
 
-    //@Test
+    @Test
     public void testAddFriend() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
@@ -159,7 +159,7 @@ public class UserDbStorageTests {
         Assertions.assertTrue(storage.getFriends(1).contains(user));
     }
 
-    //@Test
+    @Test
     public void testAddFriendNotConfirmed() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
