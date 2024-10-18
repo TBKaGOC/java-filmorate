@@ -2,15 +2,15 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
 
-@Value
+@Data
 @Builder
 @EqualsAndHashCode(of = {"id"})
 public class ReviewLike {
-    @NotNull Integer id;
-    @NotNull Integer reviewId;
-    @NotNull Integer userId;
-    @NotNull Integer useful;
+    @NotNull private Integer id;
+    @NotNull private Integer reviewId;
+    @NotNull private Integer userId;
+    @NotNull private Integer useful;
 }

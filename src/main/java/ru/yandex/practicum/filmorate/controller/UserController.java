@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/feed")
-    public Collection<FeedDto> getFeeds(@PathVariable int id) {
+    public Collection<FeedDto> getFeeds(@PathVariable int id) throws NotFoundException {
         return service.getFeeds(id);
     }
 

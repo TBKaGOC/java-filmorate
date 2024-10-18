@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserStorage storage;
     private final UserMapper mapper;
-    private final FeedMapper feedMapper;
 
     public Collection<UserDto> getUsers() {
         return storage.getUsers().stream().map(mapper::mapToUserDto).collect(Collectors.toList());
@@ -164,14 +163,19 @@ public class UserService {
         return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
     }
 
-    public Collection<FeedDto> getFeeds(int userId) {
+    public Collection<FeedDto> getFeeds(int userId) throws NotFoundException {
         log.trace(String.format("Request to get feeds userId %s ", userId));
-        getUser(userId);//for check if exist
+
+        if (!storage.contains(userId)) {
+            log.warn("Не удалось найти пользователя {}", userId);
+            throw new NotFoundException("Пользователь " + userId + " не найден");
+        }
+
         var resultDTO = storage.getFeeds(userId);
 
         var result = resultDTO
                 .stream()
-                .map(feedMapper::mapToFeedDto)
+                .map(FeedMapper::mapToFeedDto)
                 .toList();
 
         return result;

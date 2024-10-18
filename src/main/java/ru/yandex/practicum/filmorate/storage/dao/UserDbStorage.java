@@ -117,7 +117,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public void addFriend(User recipient, User sender, Boolean confirmed) {
+    public void addFriend(User recipient, User sender, Boolean confirmed) throws NotFoundException {
         if (recipient == null || sender == null) {
             throw new NotFoundException("Пользователь не найден.");
         }

@@ -19,7 +19,7 @@ public interface UserStorage {
 
     Integer addUser(User user) throws DuplicatedDataException, NotFoundException;
 
-    void addFriend(User recipient, User sender, Boolean confirmed);
+    void addFriend(User recipient, User sender, Boolean confirmed) throws NotFoundException;
 
     void updateUser(User user) throws DuplicatedDataException;
 

@@ -12,15 +12,15 @@ public class ReviewDto {
     int reviewId;
 
     @NotBlank
-    String content;
+    private String content;
 
     @NotNull
-    Boolean isPositive;
+    private Boolean isPositive;
 
-    Integer filmId;
+    private Integer filmId;
 
-    Integer userId;
+    private Integer userId;
 
-    int useful;
+    private int useful;
 }
 

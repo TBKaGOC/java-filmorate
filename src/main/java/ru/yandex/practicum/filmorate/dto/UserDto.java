@@ -16,12 +16,12 @@ import java.util.List;
 @Setter
 @Builder
 public class UserDto {
-    Integer id;
-    @Email String email;
-    @NotBlank String login;
-    String name;
-    @Past LocalDate birthday;
-    List<Integer> friends;
+    private Integer id;
+    @Email private String email;
+    @NotBlank private String login;
+    private String name;
+    @Past private LocalDate birthday;
+    private List<Integer> friends;
 
     public List<Integer> getFriends() {
         if (friends == null) {

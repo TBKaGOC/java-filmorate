@@ -3,17 +3,17 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
 
-@Value
+@Data
 @Builder
 @EqualsAndHashCode(of = {"eventId"})
 public class Feed {
-    Integer eventId;
-    @NotNull Long timestamp;
-    @NotNull Integer userId;
-    @NotBlank String eventType;
-    @NotBlank String operation;
-    @NotNull Integer entityId;
+    private Integer eventId;
+    @NotNull private Long timestamp;
+    @NotNull private Integer userId;
+    @NotBlank private String eventType;
+    @NotBlank private String operation;
+    @NotNull private Integer entityId;
 }

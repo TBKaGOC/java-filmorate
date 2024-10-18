@@ -15,11 +15,11 @@ import java.util.Set;
 @Builder
 @EqualsAndHashCode(of = {"id"})
 public class Film {
-    Integer id;
-    @NotBlank String name;
-    @Size(max = 200) String description;
-    @Past LocalDate releaseDate;
-    @Positive Integer duration;
+    private Integer id;
+    @NotBlank private String name;
+    @Size(max = 200) private String description;
+    @Past private LocalDate releaseDate;
+    @Positive private Integer duration;
     private Set<Integer> likedUsers;
     private Rating rating;
     private Set<Genre> genres;
