@@ -9,6 +9,6 @@ import lombok.EqualsAndHashCode;
 @Builder
 @EqualsAndHashCode(of = {"id"})
 public class Rating {
-    Integer id;
-    @NotBlank String name;
+    private Integer id;
+    @NotBlank private String name;
 }

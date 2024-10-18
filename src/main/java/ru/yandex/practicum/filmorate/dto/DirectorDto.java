@@ -1,14 +1,10 @@
 package ru.yandex.practicum.filmorate.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@Builder
-public class GenreDto {
+@Data
+public class DirectorDto {
     private Integer id;
     @NotBlank private String name;
 }

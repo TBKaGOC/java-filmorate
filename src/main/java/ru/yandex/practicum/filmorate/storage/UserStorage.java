@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
@@ -18,7 +19,7 @@ public interface UserStorage {
 
     Integer addUser(User user) throws DuplicatedDataException, NotFoundException;
 
-    void addFriend(User recipient, User sender, Boolean confirmed);
+    void addFriend(User recipient, User sender, Boolean confirmed) throws NotFoundException;
 
     void updateUser(User user) throws DuplicatedDataException;
 
@@ -27,4 +28,6 @@ public interface UserStorage {
     void deleteFriend(Integer recipient, Integer sender) throws NotFoundException;
 
     boolean contains(Integer id);
+
+    Collection<Feed> getFeeds(int userId);
 }
