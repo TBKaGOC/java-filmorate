@@ -46,8 +46,8 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
         return findMany(FIND_ALL);
     }
 
-    public Collection<Director> findObjectByFilm(Integer film_id) {
-        return findMany(FIND_OBJECT_BY_FILM, film_id);
+    public Collection<Director> findObjectByFilm(Integer filmId) {
+        return findMany(FIND_OBJECT_BY_FILM, filmId);
     }
 
     public Director create(Director director) {

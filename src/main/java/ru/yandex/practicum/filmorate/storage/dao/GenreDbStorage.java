@@ -39,8 +39,8 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
         }
     }
 
-    public Collection<Genre> getGenreObjectByFilm(Integer film_id) {
-        return findMany(FIND_GENRE_OBJECT_BY_FILM, film_id);
+    public Collection<Genre> getGenreObjectByFilm(Integer filmId) {
+        return findMany(FIND_GENRE_OBJECT_BY_FILM, filmId);
     }
 
     public boolean contains(Integer id) {
