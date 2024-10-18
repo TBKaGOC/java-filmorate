@@ -105,13 +105,13 @@ public class FilmService {
 
         Collection<Film> films;
         if (sortConditions.equals("year")) {
-            log.debug(message + " по году выпуска");
+            log.info(message + " по году выпуска");
             films = storage.findDirectorFilmsOrderYear(directorId);
         } else if (sortConditions.equals("likes")) {
-            log.debug(message + " по количеству лайков");
+            log.info(message + " по количеству лайков");
             films = storage.findDirectorFilmsOrderLikes(directorId);
         } else {
-            log.debug("Условия сортировки не заданы. " + message);
+            log.info("Условия сортировки не заданы. " + message);
             films = storage.findDirectorFilms(directorId);
         }
 
@@ -124,29 +124,20 @@ public class FilmService {
     }
 
     private FilmDto fillFilmData(Film film) throws NotFoundException {
-        log.debug(String.format("Ищем жанры фильма %s", film.getName()));
-        LinkedHashSet<Genre> genres = new LinkedHashSet<>();
-        for (Integer i : genreStorage.findGenresIdsByFilmId(film.getId())) {
-            try {
-                Genre genre = genreStorage.getGenre(i);
-                genres.add(genre);
-            } catch (NotFoundException ignored) {
-            }
-        }
-        log.debug(String.format("Ищем режиссеров фильма %s", film.getName()));
-        LinkedHashSet<Director> directors = new LinkedHashSet<>();
-        for (Integer i : directorStorage.findDirectorsIdsByFilmId(film.getId())) {
-            try {
-                Director director = directorStorage.findDirector(i);
-                directors.add(director);
-            } catch (NotFoundException ignored) {
-            }
-        }
-        log.debug(String.format("Ищем лайки фильма %s", film.getName()));
+        log.debug("Ищем жанры фильма {}", film.getName());
+        LinkedHashSet<Genre> genres = new LinkedHashSet<>(genreStorage.getGenreObjectByFilm(film.getId()));
+
+        log.debug("Ищем режиссеров фильма {}", film.getName());
+        LinkedHashSet<Director> directors = new LinkedHashSet<>(directorStorage.findObjectByFilm(film.getId()));
+
+        log.debug("Ищем лайки фильма {}", film.getName());
         LinkedHashSet<Integer> likes = storage.getLikes(film.getId());
-        log.debug(String.format("Ищем рейтинг фильма %s", film.getName()));
+
+        log.debug("Ищем рейтинг фильма {}", film.getName());
         Rating mpa = ratingStorage.getRating(ratingStorage.findRatingIdByFilmId(film.getId()));
-        log.debug(String.format("Фильм %s найден!", film.getName()));
+
+        log.debug("Фильм {} найден!", film.getName());
+
         film.setRating(mpa);
         film.setGenres(genres);
         film.setLikedUsers(likes);
@@ -160,7 +151,7 @@ public class FilmService {
                 .map(mapper::mapToFilmDto)
                 .collect(Collectors.toList());
 
-        log.trace(String.format("getCommonFilms: found %d rows ", result.size()));
+        log.trace("getCommonFilms: found {} rows ", result.size());
 
         for (var film: result) {
             log.trace("getCommonFilms: found " + film);

@@ -19,6 +19,9 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
     private static final String FIND_ALL = "SELECT * FROM directors";
     private static final String FIND_BY_ID = "SELECT * FROM directors WHERE id = ?";
     private static final String FIND_BY_NAME = "SELECT * FROM directors WHERE name = ?";
+    private static final String FIND_OBJECT_BY_FILM = "SELECT * FROM directors WHERE id IN (" +
+            "SELECT director_id FROM films_directors WHERE film_id = ?" +
+            ")";
     private static final String INSERT_DIRECTOR = "INSERT INTO directors(name)VALUES (?)";
     private static final String UPDATE = "UPDATE directors SET name = ? WHERE id = ?";
     private static final String DELETE = "DELETE FROM directors WHERE id = ?";
@@ -34,11 +37,6 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
         return findOne(FIND_BY_NAME, name).isPresent();
     }
 
-    public Director findDirector(Director director) throws NotFoundException {
-        return findOne(FIND_BY_ID, director.getId())
-                .orElseThrow(() -> new NotFoundException(String.format("В запросе не корректный режиссер с ID %d", director.getId())));
-    }
-
     public Director findDirector(int directorId) throws NotFoundException {
         return findOne(FIND_BY_ID, directorId)
                 .orElseThrow(() -> new NotFoundException(String.format("Режиссер с ID %d не найден", directorId)));
@@ -46,6 +44,10 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
 
     public Collection<Director> findAll() {
         return findMany(FIND_ALL);
+    }
+
+    public Collection<Director> findObjectByFilm(Integer film_id) {
+        return findMany(FIND_OBJECT_BY_FILM, film_id);
     }
 
     public Director create(Director director) {

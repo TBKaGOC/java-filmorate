@@ -16,7 +16,9 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM genre";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM genre WHERE genre_id = ?";
     private static final String CONTAINS_QUERY = "SELECT EXISTS(SELECT genre_id FROM genre WHERE genre_id = ?) AS b";
-
+    private static final String FIND_GENRE_OBJECT_BY_FILM = "SELECT * FROM genre WHERE genre_id IN (" +
+            "SELECT genre_id from film_genre WHERE film_id = ?" +
+            ")";
     private static final String FIND_GENRE_ID_QUERY = "SELECT genre_id FROM film_genre WHERE film_id = ?";
     private static final String DELETE_BY_FILMID_GENREID = "DELETE film_genre WHERE film_id = ? and genre_id = ?";
 
@@ -35,6 +37,10 @@ public class GenreDbStorage extends BaseDbStorage<Genre> {
             log.warn("Не удалось получить жанр {}", id);
             throw e;
         }
+    }
+
+    public Collection<Genre> getGenreObjectByFilm(Integer film_id) {
+        return findMany(FIND_GENRE_OBJECT_BY_FILM, film_id);
     }
 
     public boolean contains(Integer id) {

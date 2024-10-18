@@ -26,12 +26,12 @@ public class DirectorService {
     }
 
     public Collection<DirectorDto> findAll() {
-        log.debug("Получаем записи о всех режиссерах");
+        log.info("Получаем записи о всех режиссерах");
         return directorStorage.findAll().stream().map(DirectorMapper::mapToDirectorDto).collect(Collectors.toList());
     }
 
     public DirectorDto create(DirectorDto request) throws DuplicatedDataException {
-        log.debug("Создаем запись о режиссере");
+        log.info("Создаем запись о режиссере");
 
         if (directorStorage.isDirectorWithSameNameExist(request.getName())) {
             throw new DuplicatedDataException(String.format("Режиссер с именем \"%s\" уже существует",
@@ -45,7 +45,7 @@ public class DirectorService {
     }
 
     public DirectorDto update(DirectorDto request) throws NotFoundException {
-        log.debug("Обновляем данные о режиссерах");
+        log.info("Обновляем данные о режиссерах");
 
         if (request.getId() == null) {
             throw new ValidationException("Id режиссера должен быть указан");
@@ -61,7 +61,7 @@ public class DirectorService {
     public boolean delete(int directorId) throws NotFoundException {
         Director director = directorStorage.findDirector(directorId);
 
-        log.debug(String.format("Удаляем данные режиссера %s", director.getName()));
+        log.info("Удаляем данные режиссера {}", director.getName());
 
         return directorStorage.delete(directorId);
     }

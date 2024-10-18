@@ -460,21 +460,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private void foldFilm(Integer id, Film result) throws NotFoundException {
         List<Integer> likes = jdbc.queryForList("SELECT user_id FROM liked_user WHERE film_id = ?",
                 Integer.class, id);
-        List<Integer> genres = jdbc.queryForList(
-                "SELECT genre_id FROM film_genre WHERE film_id = ?",
-                Integer.class, id);
         Set<Genre> resultGenres = new TreeSet<>(Comparator.comparingInt(Genre::getId));
+        LinkedHashSet<Director> directors = new LinkedHashSet<>(directorDbStorage.findObjectByFilm(id));
 
-        for (Integer genre : genres) {
-            resultGenres.add(genreStorage.getGenre(genre));
-        }
-        List<Integer> directorsIds = jdbc.queryForList(
-                "SELECT director_id FROM films_directors WHERE film_id = ?",
-                Integer.class, id);
-        LinkedHashSet<Director> directors = new LinkedHashSet<>();
-        for (Integer directorId : directorsIds) {
-            directors.add(directorDbStorage.findDirector(directorId));
-        }
+        resultGenres.addAll(genreStorage.getGenreObjectByFilm(id));
+
         result.setGenres(resultGenres);
         result.setLikedUsers(Set.copyOf(likes));
         result.setDirectors(directors);
