@@ -18,11 +18,11 @@ import java.util.Set;
 @Builder
 @ToString
 public class FilmDto {
-    Integer id;
-    @NotBlank String name;
-    @Size(max = 200) String description;
-    LocalDate releaseDate;
-    @Positive Integer duration;
+    private Integer id;
+    @NotBlank private String name;
+    @Size(max = 200) private String description;
+    private LocalDate releaseDate;
+    @Positive private Integer duration;
     private Set<Integer> likedUsers;
     private Rating mpa;
     private Set<Genre> genres;

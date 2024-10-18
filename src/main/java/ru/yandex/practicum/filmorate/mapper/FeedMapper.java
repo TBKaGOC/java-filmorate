@@ -1,14 +1,12 @@
 package ru.yandex.practicum.filmorate.mapper;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dto.FeedDto;
 import ru.yandex.practicum.filmorate.dto.FeedEventType;
 import ru.yandex.practicum.filmorate.dto.FeedOperationType;
 import ru.yandex.practicum.filmorate.model.Feed;
 
-@Component
 public class FeedMapper {
-    public FeedDto mapToFeedDto(Feed feed) {
+    public static FeedDto mapToFeedDto(Feed feed) {
         return FeedDto.builder()
                 .eventId(feed.getEventId())
                 .entityId(feed.getEntityId())
@@ -20,7 +18,7 @@ public class FeedMapper {
                 .build();
     }
 
-    public Feed mapToFeed(FeedDto feed) {
+    public static Feed mapToFeed(FeedDto feed) {
         return Feed.builder()
                 .eventId(feed.getEventId())
                 .entityId(feed.getEntityId())

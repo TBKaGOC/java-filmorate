@@ -22,7 +22,7 @@ public class UserDbStorageTests {
     private final UserDbStorage storage;
 
     @Test
-    public void testGetAllUser() {
+    public void testGetAllUser() throws NotFoundException {
         User user = User.builder()
                 .email("e@mail.e")
                 .login("login")

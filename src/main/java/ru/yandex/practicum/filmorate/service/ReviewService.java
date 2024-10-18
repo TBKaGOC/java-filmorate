@@ -27,16 +27,15 @@ public class ReviewService {
         return reviewMapper.mapToReviewDto(storage.getReview(id));
     }
 
-    public Collection<ReviewDto> getMostPopular(Integer filmId, int count) {
+    public Collection<ReviewDto> getMostPopular(Integer filmId, int limit) {
         if (filmId == null) {
-            return storage.getReviews(count)
+            return storage.getReviews(limit)
                     .stream()
-                    .limit(count)
                     .map(reviewMapper::mapToReviewDto)
                     .collect(Collectors.toList());
         }
         return storage
-                .getMostPopularReviews(filmId, count)
+                .getMostPopularReviews(filmId, limit)
                 .stream()
                 .map(reviewMapper::mapToReviewDto)
                 .collect(Collectors.toList());

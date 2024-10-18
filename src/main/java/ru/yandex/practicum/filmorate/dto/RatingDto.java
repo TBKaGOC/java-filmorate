@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class RatingDto {
-    Integer id;
-    @NotBlank String name;
+    private Integer id;
+    @NotBlank private String name;
 }

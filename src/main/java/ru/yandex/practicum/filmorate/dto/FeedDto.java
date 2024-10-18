@@ -2,15 +2,15 @@ package ru.yandex.practicum.filmorate.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+@Data
 @Builder
 public class FeedDto {
-    Integer eventId;
-    @NotNull Long timestamp;
-    @NotNull Integer userId;
-    @NotNull FeedEventType eventType;
-    @NotNull FeedOperationType operation;
-    @NotNull Integer entityId;
+    private Integer eventId;
+    @NotNull private Long timestamp;
+    @NotNull private Integer userId;
+    @NotNull private FeedEventType eventType;
+    @NotNull private FeedOperationType operation;
+    @NotNull private Integer entityId;
 }
