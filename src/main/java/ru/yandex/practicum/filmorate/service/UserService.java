@@ -46,7 +46,7 @@ public class UserService {
 
         var friends = storage.getFriends(id);
 
-        log.trace(String.format("Для пользователя %s вернул %s друзей", id, friends.size()));
+        log.info("Для пользователя {} вернул {} друзей", id, friends.size());
 
         return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toList());
     }
@@ -146,38 +146,29 @@ public class UserService {
             log.warn("Не удалось пользователя {} из друзей пользователя {}", recipient, sender);
             throw new NotFoundException("Пользователь " + recipient + " не найден");
         }
-//        User user1 = storage.getUser(sender);
-//        User user2 = storage.getUser(recipient);
-//        user1.deleteFriend(user2);
-//        user2.deleteFriend(user1);
         storage.deleteFriend(recipient, sender);
-        //storage.deleteFriend(sender, recipient);
         log.info("Для пользователя {} удален друг {} ", sender, recipient);
     }
 
     public Set<UserDto> getMutualFriend(Integer user1, Integer user2) throws NotFoundException {
         var friends = storage.getMutualFriend(user1, user2);
 
-        log.trace(String.format("Для пользователей %s, %s вернул %s друзей", user1, user2, friends.size()));
+        log.info("Для пользователей {}, {} вернул {} друзей", user1, user2, friends.size());
 
         return friends.stream().map(mapper::mapToUserDto).collect(Collectors.toSet());
     }
 
     public Collection<FeedDto> getFeeds(int userId) throws NotFoundException {
-        log.trace(String.format("Request to get feeds userId %s ", userId));
+        log.info("Request to get feeds userId {}", userId);
 
         if (!storage.contains(userId)) {
             log.warn("Не удалось найти пользователя {}", userId);
             throw new NotFoundException("Пользователь " + userId + " не найден");
         }
 
-        var resultDTO = storage.getFeeds(userId);
-
-        var result = resultDTO
+        return storage.getFeeds(userId)
                 .stream()
                 .map(FeedMapper::mapToFeedDto)
                 .toList();
-
-        return result;
     }
 }

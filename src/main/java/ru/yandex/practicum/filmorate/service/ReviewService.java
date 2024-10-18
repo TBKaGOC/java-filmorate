@@ -42,7 +42,7 @@ public class ReviewService {
     }
 
     public ReviewDto addReview(@Valid ReviewDto reviewDto) throws NotFoundException {
-        log.trace(String.format("Request to add review \"%s\"", reviewDto));
+        log.info("Request to add review \"{}\"", reviewDto);
 
         var filmId = reviewDto.getFilmId();
 
@@ -68,13 +68,13 @@ public class ReviewService {
 
         var result = reviewMapper.mapToReviewDto(storage.getReview(id));
 
-        log.info(String.format("Успешно добавлен новый отзыв \"%s\"", result));
+        log.info("Успешно добавлен новый отзыв \"{}\"", result);
 
         return result;
     }
 
     public ReviewDto updateReview(ReviewDto reviewDto) throws NotFoundException {
-        log.trace(String.format("Request to update review \"%s\"", reviewDto));
+        log.info("Request to update review \"{}\"", reviewDto);
 
         var id = reviewDto.getReviewId();
         Review oldReview = storage.getReview(id);
@@ -89,13 +89,13 @@ public class ReviewService {
 
         var result = reviewMapper.mapToReviewDto(storage.getReview(id));
 
-        log.trace(String.format("Success to update review \"%s\"", result));
+        log.info("Success to update review \"{}\"", result);
 
         return result;
     }
 
     public ReviewDto deleteReview(int id) throws NotFoundException {
-        log.trace(String.format("Request to delete reviewId \"%d\"", id));
+        log.info("Request to delete reviewId \"{}\"", id);
 
         if (!storage.containsReview(id)) {
             log.warn("Не удалось найти отзыв {}", id);
@@ -108,18 +108,16 @@ public class ReviewService {
 
         var result = reviewMapper.mapToReviewDto(deletedReview);
 
-        log.trace(String.format("Success to delete reviewId \"%d\"", id));
+        log.trace("Success to delete reviewId \"{}\"", id);
 
         return result;
     }
 
     public void addLike(int reviewId, int userid, int useful) throws NotFoundException {
-        log.trace(
-                String.format(
-                        "Request to add like to reviewId \"%d\" from userId \"%s\" as useful \"%s\"",
+        log.trace("Request to add like to reviewId \"{}\" from userId \"{}\" as useful \"{}\"",
                         reviewId,
                         userid,
-                        useful));
+                        useful);
 
         if (!storage.containsReview(reviewId)) {
             log.warn("Не удалось найти отзыв {}", reviewId);
@@ -137,20 +135,14 @@ public class ReviewService {
             storage.addReviewLike(reviewId, userid, useful);
         }
 
-        log.trace(
-                String.format(
-                        "Success to add like to reviewId \"%d\" from userId \"%s\" as useful \"%s\"",
-                        reviewId,
-                        userid,
-                        useful));
+        log.info("Success to add like to reviewId \"{}\" from userId \"{}\" as useful \"{}\"",
+                reviewId,
+                userid,
+                useful);
     }
 
     public void deleteLike(int reviewId, int userid) throws NotFoundException {
-        log.trace(
-                String.format(
-                        "Request to delete like to reviewId \"%d\" from userId \"%s\"",
-                        reviewId,
-                        userid));
+        log.info("Request to delete like to reviewId \"{}\" from userId \"{}\"", reviewId, userid);
 
         if (!storage.containsReview(reviewId)) {
             log.warn("Не удалось найти отзыв {}", reviewId);
@@ -163,16 +155,12 @@ public class ReviewService {
         }
 
         if (!storage.containsReviewLike(reviewId, userid)) {
-            log.warn(String.format("Не удалось найти лайк/дизлайк пользователя %d для отзыва %d", userid, reviewId));
+            log.warn("Не удалось найти лайк/дизлайк пользователя {} для отзыва {}", userid, reviewId);
             throw new NotFoundException(String.format("Пользователь \"%d\" не найден среди лайка/дизлайка для отзыва %d", userid, reviewId));
         }
 
         storage.deleteReviewLike(reviewId, userid);
 
-        log.trace(
-                String.format(
-                        "Success to delete like to reviewId \"%d\" from userId \"%s\"",
-                        reviewId,
-                        userid));
+        log.info("Success to delete like to reviewId \"{}\" from userId \"{}\"", reviewId, userid);
     }
 }

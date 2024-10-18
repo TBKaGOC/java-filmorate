@@ -35,18 +35,22 @@ public class FilmController {
     }
 
     @PostMapping
-    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException, NotFoundException, DuplicatedDataException {
+    public FilmDto createFilm(@Valid @RequestBody FilmDto film) throws CorruptedDataException,
+            NotFoundException,
+            DuplicatedDataException {
         service.addFilm(film);
         return service.getFilm(film.getId());
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException, CorruptedDataException, DuplicatedDataException {
+    public FilmDto updateFilm(@Valid @RequestBody FilmDto film) throws NotFoundException,
+            CorruptedDataException,
+            DuplicatedDataException {
         return service.updateFilm(film);
     }
 
-    @PutMapping("/{film_id}/like/{id}")
-    public FilmDto likeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
+    @PutMapping("/{film-id}/like/{id}")
+    public FilmDto likeFilm(@PathVariable("film-id") int filmId, @PathVariable int id) throws NotFoundException {
         service.addLike(id, filmId);
         return service.getFilm(filmId);
     }
@@ -56,8 +60,8 @@ public class FilmController {
         service.deleteFilm(filmId);
     }
 
-    @DeleteMapping("/{film_id}/like/{id}")
-    public void unlikeFilm(@PathVariable("film_id") int filmId, @PathVariable int id) throws NotFoundException {
+    @DeleteMapping("/{film-id}/like/{id}")
+    public void unlikeFilm(@PathVariable("film-id") int filmId, @PathVariable int id) throws NotFoundException {
         service.deleteLike(id, filmId);
     }
 
@@ -68,15 +72,15 @@ public class FilmController {
         return service.getCommonFilms(userId, friendId);
     }
 
-    @GetMapping("/director/{directorId}")
-    public Collection<FilmDto> findDirectorFilms(@PathVariable("directorId") int directorId,
+    @GetMapping("/director/{director-id}")
+    public Collection<FilmDto> findDirectorFilms(@PathVariable("director-id") int directorId,
                                                  @RequestParam(name = "sortBy", defaultValue = "")
                                                  String sortConditions) throws NotFoundException {
         return service.findDirectorFilms(directorId, sortConditions);
     }
 
     @GetMapping("/search")
-    public Collection<FilmDto> search(@RequestParam String query, @RequestParam String by) throws NotFoundException {
+    public Collection<FilmDto> search(@RequestParam String query, @RequestParam String by) {
         return service.search(query, by);
     }
 }

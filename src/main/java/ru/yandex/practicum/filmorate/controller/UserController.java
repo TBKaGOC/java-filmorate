@@ -35,8 +35,8 @@ public class UserController {
         return service.getFriends(id);
     }
 
-    @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<UserDto> getMutualFriends(@PathVariable int id, @PathVariable int otherId)
+    @GetMapping("/{id}/friends/common/{other-id}")
+    public Collection<UserDto> getMutualFriends(@PathVariable int id, @PathVariable("other-id") int otherId)
             throws NotFoundException {
         return service.getMutualFriend(id, otherId);
     }
@@ -62,19 +62,19 @@ public class UserController {
         return service.updateUser(user);
     }
 
-    @PutMapping("/{id}/friends/{friendId}")
-    public Collection<UserDto> addFriend(@PathVariable int id, @PathVariable int friendId) throws NotFoundException,
-            DuplicatedDataException {
+    @PutMapping("/{id}/friends/{friend-id}")
+    public Collection<UserDto> addFriend(@PathVariable int id, @PathVariable("friend-id") int friendId)
+            throws NotFoundException {
         return service.addFriend(id, friendId);
     }
 
-    @DeleteMapping("/{userId}")
-    public void deleteUser(@PathVariable int userId) {
+    @DeleteMapping("/{user-id}")
+    public void deleteUser(@PathVariable("user-id") int userId) {
         service.deleteUser(userId);
     }
 
-    @DeleteMapping("/{id}/friends/{friendId}")
-    public void deleteFriend(@PathVariable int id, @PathVariable int friendId) throws NotFoundException {
+    @DeleteMapping("/{id}/friends/{friend-id}")
+    public void deleteFriend(@PathVariable int id, @PathVariable("friend-id") int friendId) throws NotFoundException {
         service.deleteFriend(id, friendId);
     }
 }
