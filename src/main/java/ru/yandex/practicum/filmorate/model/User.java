@@ -17,12 +17,12 @@ import java.util.Set;
 @Builder
 @EqualsAndHashCode(of = {"id"})
 public class User {
-    Integer id;
-    @Email String email;
-    @NotBlank String login;
-    String name;
-    @Past LocalDate birthday;
-    Map<Integer, Boolean> friends;
+    private Integer id;
+    @Email private String email;
+    @NotBlank private String login;
+    private String name;
+    @Past private LocalDate birthday;
+    private Map<Integer, Boolean> friends;
 
     public void addFriend(User user, boolean confirmed) {
         if (friends == null) {

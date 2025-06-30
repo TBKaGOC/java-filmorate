@@ -40,7 +40,7 @@ public class BaseDbStorage<T> {
         jdbc.update(query, params);
     }
 
-    protected long insert(String query, Object... params) {
+    protected int insert(String query, Object... params) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(connection -> {
             PreparedStatement ps = connection
