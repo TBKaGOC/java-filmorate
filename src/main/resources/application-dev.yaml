@@ -1,0 +1,6 @@
+spring:
+  main.banner-mode: off
+  datasource.url: jdbc:h2:mem:filmorate
+logging.level:
+  ru.yandex.practicum.filmorate: TRACE
+  org.zalando.logbook: INFO
